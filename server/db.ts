@@ -1,11 +1,10 @@
-import { eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertRsvp, InsertUser, rsvps, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +88,65 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function createRsvp(data: InsertRsvp) {
+  const db = await getDb();
+  if (!db) throw new Error("Base de données indisponible");
+
+  await db.insert(rsvps).values(data);
+  const rows = await db.select().from(rsvps).where(eq(rsvps.ticketCode, data.ticketCode)).limit(1);
+  return rows[0];
+}
+
+export async function getRsvpByTicketCode(ticketCode: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(rsvps).where(eq(rsvps.ticketCode, ticketCode)).limit(1);
+  return rows[0];
+}
+
+export async function getAllRsvps() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(rsvps).orderBy(desc(rsvps.createdAt));
+}
+
+export async function getPublicWeddingStats() {
+  const db = await getDb();
+  if (!db) {
+    return {
+      attendingResponses: 0,
+      totalGuests: 0,
+      declinedResponses: 0,
+      totalResponses: 0,
+    };
+  }
+
+  const rows = await db.select().from(rsvps);
+  const attending = rows.filter(r => r.attendance === 'yes');
+  const declined = rows.filter(r => r.attendance === 'no');
+  const totalGuests = attending.reduce((acc, curr) => acc + (curr.guestsCount || 1), 0);
+
+  return {
+    attendingResponses: attending.length,
+    totalGuests,
+    declinedResponses: declined.length,
+    totalResponses: rows.length,
+  };
+}
+
+export async function getApprovedMessages() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      id: rsvps.id,
+      name: rsvps.name,
+      message: rsvps.message,
+      createdAt: rsvps.createdAt,
+    })
+    .from(rsvps)
+    .where(sql`${rsvps.message} IS NOT NULL AND ${rsvps.message} != ''`)
+    .orderBy(desc(rsvps.createdAt))
+    .limit(20);
+  return rows;
+}
