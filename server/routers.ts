@@ -1,10 +1,16 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
+import { parse as parseCookie } from "cookie";
 import { z } from "zod";
 import * as db from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
-import { adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, router } from "./_core/trpc";
+
+const ADMIN_SESSION_COOKIE = "wedding_admin_session";
+const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 
 function generateTicketCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -15,6 +21,46 @@ function generateTicketCode() {
   return result;
 }
 
+function adminSessionToken() {
+  return createHmac("sha256", ENV.cookieSecret || ENV.adminPassword)
+    .update("michelle-marcing-admin-session")
+    .digest("hex");
+}
+
+function isAdminSessionValid(req: { headers: { cookie?: string } }) {
+  const token = parseCookie(req.headers.cookie || "")[ADMIN_SESSION_COOKIE];
+  if (!token) return false;
+
+  const expected = Buffer.from(adminSessionToken());
+  const received = Buffer.from(token);
+  return received.length === expected.length && timingSafeEqual(received, expected);
+}
+
+function setAdminSession(res: any, req: any) {
+  res.cookie(ADMIN_SESSION_COOKIE, adminSessionToken(), {
+    ...getSessionCookieOptions(req),
+    maxAge: ADMIN_SESSION_MAX_AGE * 1000,
+  });
+}
+
+function clearAdminSession(res: any, req: any) {
+  res.clearCookie(ADMIN_SESSION_COOKIE, {
+    ...getSessionCookieOptions(req),
+    maxAge: 0,
+  });
+}
+
+const adminSessionProcedure = publicProcedure.use(({ ctx, next }) => {
+  if (!isAdminSessionValid(ctx.req)) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Mot de passe administrateur requis",
+    });
+  }
+
+  return next({ ctx });
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -22,25 +68,15 @@ export const appRouter = router({
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
   wedding: router({
-    // Permet d'afficher publiquement quelques messages récents d'amour et de félicitations
-    getMessages: publicProcedure.query(async () => {
-      return db.getApprovedMessages();
-    }),
+    getMessages: publicProcedure.query(async () => db.getApprovedMessages()),
 
-    // Récupérer un billet électronique via son code unique
     getTicket: publicProcedure
-      .input(
-        z.object({
-          code: z.string().min(3),
-        })
-      )
+      .input(z.object({ code: z.string().min(3) }))
       .query(async ({ input }) => {
         const ticket = await db.getRsvpByTicketCode(input.code);
         if (!ticket) {
@@ -52,7 +88,6 @@ export const appRouter = router({
         return ticket;
       }),
 
-    // Soumission du formulaire d'invitation (RSVP)
     submitRsvp: publicProcedure
       .input(
         z.object({
@@ -85,21 +120,36 @@ export const appRouter = router({
               : "Nous avons bien reçu votre message. Merci infiniment pour votre chaleureuse pensée !",
         };
       }),
-
-    // Statistiques générales pour le couple
-    getStats: publicProcedure.query(async () => {
-      return db.getPublicWeddingStats();
-    }),
   }),
 
   admin: router({
-    // Liste complète de toutes les réponses avec détails
-    listRsvps: adminProcedure.query(async () => {
-      return db.getAllRsvps();
+    login: publicProcedure
+      .input(z.object({ password: z.string().min(1, "Veuillez entrer le mot de passe") }))
+      .mutation(({ input, ctx }) => {
+        const received = Buffer.from(input.password);
+        const expected = Buffer.from(ENV.adminPassword);
+        const isValid = received.length === expected.length && timingSafeEqual(received, expected);
+
+        if (!isValid) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Mot de passe incorrect",
+          });
+        }
+
+        setAdminSession(ctx.res, ctx.req);
+        return { success: true } as const;
+      }),
+
+    logout: publicProcedure.mutation(({ ctx }) => {
+      clearAdminSession(ctx.res, ctx.req);
+      return { success: true } as const;
     }),
-    stats: adminProcedure.query(async () => {
-      return db.getPublicWeddingStats();
-    }),
+
+    me: publicProcedure.query(({ ctx }) => ({ authenticated: isAdminSessionValid(ctx.req) })),
+
+    listRsvps: adminSessionProcedure.query(async () => db.getAllRsvps()),
+    stats: adminSessionProcedure.query(async () => db.getPublicWeddingStats()),
   }),
 });
 
