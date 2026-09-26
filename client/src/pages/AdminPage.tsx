@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, CheckCircle, Download, KeyRound, Loader2, LockKeyhole, Mail, RefreshCw, Search, Ticket, Trash2, UserCheck, UserX, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
@@ -28,6 +28,16 @@ export default function AdminPage() {
   const logoutMutation = trpc.admin.logout.useMutation({
     onSuccess: () => { adminMe.refetch(); toast.success("Espace mariés verrouillé."); },
   });
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    return () => {
+      // Toute navigation hors de l’espace privé invalide aussi la session côté serveur.
+      logoutMutation.mutate();
+    };
+    // Le nettoyage doit être lié uniquement à la sortie de cette page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
   const deleteRsvpMutation = trpc.admin.deleteRsvp.useMutation({
     onSuccess: async () => { await Promise.all([statsQuery.refetch(), listQuery.refetch()]); toast.success("Confirmation supprimée."); },
     onError: (error) => toast.error(error.message),

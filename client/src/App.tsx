@@ -5,7 +5,9 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AdminPage from "./pages/AdminPage";
+import DeclinedPage from "./pages/DeclinedPage";
 import Home from "./pages/Home";
+import SimulationPage from "./pages/SimulationPage";
 import TicketPage from "./pages/TicketPage";
 
 function Router() {
@@ -13,6 +15,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/billet/:code" component={TicketPage} />
+      <Route path="/indisponible" component={DeclinedPage} />
+      <Route path="/simulation" component={SimulationPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/404" component={NotFound} />
       {/* Fallback */}

@@ -1,6 +1,7 @@
 import confetti from "canvas-confetti";
 import { Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "wouter";
 import { WEDDING_CONFIG } from "../weddingConfig";
 
 interface TimeLeft {
@@ -11,7 +12,7 @@ interface TimeLeft {
   isReached: boolean;
 }
 
-export function CountdownSection() {
+export function CountdownSection({ standalone = false }: { standalone?: boolean }) {
   const [forceReached, setForceReached] = useState(false);
   const targetDate = useMemo(() => new Date(WEDDING_CONFIG.dateIso).getTime(), []);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(targetDate));
@@ -59,7 +60,7 @@ export function CountdownSection() {
   const pad = (n: number, size = 2) => String(n).padStart(size, "0");
 
   return (
-    <section className="py-10 px-4 text-center">
+    <section className={`py-10 px-4 text-center ${standalone ? "min-h-[560px] flex items-center justify-center" : ""}`}>
       <div className="max-w-4xl mx-auto">
         {isDDay ? (
           <div className="card-luxury p-8 md:p-10 rounded-3xl max-w-xl mx-auto border-[#c69a58]/50 shadow-2xl animate-fade-in relative">
@@ -103,9 +104,9 @@ export function CountdownSection() {
 
             <div className="mt-6 inline-flex items-center gap-2 text-[11px] text-[#8d7c6e]">
               <span>Envie de voir l'effet du jour J ?</span>
-              <button type="button" onClick={() => { setForceReached(true); triggerCelebration(); }} className="text-[#855f24] font-semibold underline hover:text-[#5d4016] flex items-center gap-1 cursor-pointer">
+              <Link href={standalone ? "#" : "/simulation"} onClick={standalone ? (event) => { event.preventDefault(); setForceReached(true); triggerCelebration(); } : undefined} className="text-[#855f24] font-semibold underline hover:text-[#5d4016] flex items-center gap-1 cursor-pointer">
                 <Sparkles className="w-3 h-3" /> Simuler l'explosion
-              </button>
+              </Link>
             </div>
           </div>
         )}

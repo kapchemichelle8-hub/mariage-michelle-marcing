@@ -19,7 +19,7 @@ export default function TicketPage() {
           href="/"
           className="inline-flex items-center gap-2 text-xs font-semibold text-[#855f24] hover:underline"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Retourner à l'invitation
+          <ArrowLeft className="w-3.5 h-3.5" /> Retourner sur le site
         </Link>
       </div>
 
@@ -48,6 +48,7 @@ export default function TicketPage() {
             name: ticket.name,
             guestsCount: ticket.guestsCount,
             attendance: ticket.attendance,
+            email: ticket.email ?? undefined,
             createdAt: ticket.createdAt,
           }}
         />

@@ -1,12 +1,11 @@
-# Suivi des corrections — site Michelle & Marcing
+# Suivi des corrections demandées — Michelle & Marcing
 
-- [x] Corriger les textes, accents, formulations et le terme « dot ».
-- [x] Remplacer Bafoussam par Bandjoun et ajouter l’itinéraire vers la Mission protestante de Nlem.
-- [x] Réparer la réponse RSVP « Avec regret » et afficher un message de soutien.
-- [x] Ajouter la section « Dons et cadeaux » avec Kapche Michelle et les deux numéros.
-- [x] Limiter le livre d’or à trois messages avec bouton « Voir plus ».
-- [x] Rendre l’impression ciblée sur le billet uniquement.
-- [x] Ajouter la suppression sécurisée des confirmations et des mots d’or.
-- [x] Supprimer les données de test existantes dans la base RSVP.
-- [x] Optimiser les images principales en WebP et activer le chargement différé.
-- [x] Vérifier le rendu final après compilation et créer le checkpoint de livraison.
+- [x] Isoler la simulation du jour J sur une page indépendante (/simulation) avec bouton de retour.
+- [x] Isoler le message d’indisponibilité sur une page dédiée (/indisponible) avec bouton de retour.
+- [x] Verrouiller automatiquement l’espace réservé aux mariés dès la sortie de la page.
+- [x] Permettre le téléchargement direct du billet en image PNG pour la galerie du téléphone.
+- [x] Permettre le téléchargement du billet officiel au format PDF.
+- [x] Casser l’impression de toute la page et n’imprimer que le billet officiel.
+- [x] Mettre à jour le lieu principal avec « Mission protestante de Nlem » à Bandjoun.
+- [x] Rediriger directement l’invité vers son billet officiel après confirmation avec bouton de retour sur le site.
+- [x] Valider la compilation, les tests et nettoyer les données de test.

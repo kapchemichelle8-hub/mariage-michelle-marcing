@@ -85,7 +85,7 @@ export function ScheduleAndDetailsSection() {
             Quand & Où ?
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            Notre célébration aura lieu au Centre climatique de Bandjoun, entourés de nos familles et de nos proches. Depuis le Centre climatique, prenez la moto et dites : « Mission protestante de Nlem », la maison est juste à côté.
+            Notre célébration aura lieu à Bandjoun, à côté de la Mission protestante de Nlem, entourés de nos familles et de nos proches. Depuis le Centre climatique, prenez une moto et demandez la Mission protestante de Nlem : la maison se trouve juste à côté.
           </p>
         </div>
 

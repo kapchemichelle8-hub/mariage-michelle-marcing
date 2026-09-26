@@ -4,7 +4,7 @@ export const WEDDING_CONFIG = {
   title: "Dot & Union traditionnelle",
   dateString: "26 décembre 2026",
   dateIso: "2026-12-26T18:00:00+01:00",
-  locationName: "Centre climatique de Bandjoun",
+  locationName: "Mission protestante de Nlem, Bandjoun",
   city: "Bandjoun, Cameroun",
   directions: "Depuis le Centre climatique de Bandjoun, prenez la moto et dites simplement : « Mission protestante de Nlem ». La maison est juste à côté.",
   rsvpDeadline: "1er décembre 2026",
@@ -36,7 +36,7 @@ export const WEDDING_CONFIG = {
     {
       time: "18 h 00",
       title: "Accueil des familles et déballage des présents",
-      location: "Centre climatique de Bandjoun",
+      location: "Mission protestante de Nlem, Bandjoun",
       description: "Accueil chaleureux des deux familles, pourparlers traditionnels selon les coutumes et présentation cérémoniale des présents de la dot.",
       image: "/manus-storage/presents_ca130746.webp",
       tag: "Tradition & respect",
@@ -44,7 +44,7 @@ export const WEDDING_CONFIG = {
     {
       time: "22 h 00",
       title: "Union des deux cœurs selon la tradition",
-      location: "Centre climatique de Bandjoun",
+      location: "Mission protestante de Nlem, Bandjoun",
       description: "Bénédiction des patriarches, alliance symbolique des deux lignées et scellement solennel de notre promesse d'amour éternel.",
       image: "/manus-storage/handsUnion_c4f9e4b6.webp",
       tag: "Moment sacré",
