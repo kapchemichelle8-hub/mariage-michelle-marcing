@@ -31,9 +31,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    const lock = () => logoutMutation.mutate();
+    window.addEventListener("pagehide", lock);
     return () => {
       // Toute navigation hors de l’espace privé invalide aussi la session côté serveur.
-      logoutMutation.mutate();
+      window.removeEventListener("pagehide", lock);
+      lock();
     };
     // Le nettoyage doit être lié uniquement à la sortie de cette page.
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -12,8 +12,8 @@ interface TimeLeft {
   isReached: boolean;
 }
 
-export function CountdownSection({ standalone = false }: { standalone?: boolean }) {
-  const [forceReached, setForceReached] = useState(false);
+export function CountdownSection({ standalone = false, autoSimulate = false }: { standalone?: boolean; autoSimulate?: boolean }) {
+  const [forceReached, setForceReached] = useState(autoSimulate);
   const targetDate = useMemo(() => new Date(WEDDING_CONFIG.dateIso).getTime(), []);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(targetDate));
 

@@ -4,13 +4,14 @@ import { TRPCError } from "@trpc/server";
 import { parse as parseCookie } from "cookie";
 import { z } from "zod";
 import * as db from "./db";
+import { sendTicketEmail } from "./email";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 
-const ADMIN_SESSION_COOKIE = "wedding_admin_session";
-const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+const ADMIN_SESSION_COOKIE = "wedding_admin_session_v2";
+const LEGACY_ADMIN_SESSION_COOKIE = "wedding_admin_session";
 
 function generateTicketCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -39,12 +40,15 @@ function isAdminSessionValid(req: { headers: { cookie?: string } }) {
 function setAdminSession(res: any, req: any) {
   res.cookie(ADMIN_SESSION_COOKIE, adminSessionToken(), {
     ...getSessionCookieOptions(req),
-    maxAge: ADMIN_SESSION_MAX_AGE * 1000,
   });
 }
 
 function clearAdminSession(res: any, req: any) {
   res.clearCookie(ADMIN_SESSION_COOKIE, {
+    ...getSessionCookieOptions(req),
+    maxAge: 0,
+  });
+  res.clearCookie(LEGACY_ADMIN_SESSION_COOKIE, {
     ...getSessionCookieOptions(req),
     maxAge: 0,
   });
@@ -108,12 +112,16 @@ export const appRouter = router({
           message: input.message || null,
           ticketCode,
         });
+        const emailSent = input.attendance === "yes" && Boolean(input.email)
+          ? await sendTicketEmail({ recipient: input.email!, name: input.name, guestsCount: input.guestsCount, ticketCode })
+          : false;
 
         return {
           success: true,
           rsvp: saved,
           ticketCode,
           attendance: input.attendance,
+          emailSent,
           message:
             input.attendance === "yes"
               ? "Votre présence a été enregistrée avec succès. Voici votre billet d'invitation officiel !"

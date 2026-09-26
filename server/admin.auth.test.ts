@@ -39,6 +39,13 @@ describe("admin security & password login", () => {
 
     const loginResult = await caller.admin.login({ password: "mariage2026" });
     expect(loginResult.success).toBe(true);
-    expect(setCookies.some((c) => c.startsWith("wedding_admin_session="))).toBe(true);
+    expect(setCookies.some((c) => c.startsWith("wedding_admin_session_v2="))).toBe(true);
+  });
+
+  it("does not accept the legacy session cookie", async () => {
+    const { ctx } = createMockContext("wedding_admin_session=old-token");
+    const caller = appRouter.createCaller(ctx);
+    expect((await caller.admin.me()).authenticated).toBe(false);
+    await expect(caller.admin.stats()).rejects.toThrow("Mot de passe administrateur requis");
   });
 });
