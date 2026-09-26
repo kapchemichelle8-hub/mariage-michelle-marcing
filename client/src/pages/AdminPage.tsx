@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, CheckCircle, Download, KeyRound, Loader2, LockKeyhole, Mail, RefreshCw, Search, Ticket, UserCheck, UserX, Users } from "lucide-react";
+import { ArrowLeft, CheckCircle, Download, KeyRound, Loader2, LockKeyhole, Mail, RefreshCw, Search, Ticket, Trash2, UserCheck, UserX, Users } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -12,6 +12,11 @@ export default function AdminPage() {
 
   const adminMe = trpc.admin.me.useQuery();
   const isAuthenticated = adminMe.data?.authenticated === true;
+  const statsQuery = trpc.admin.stats.useQuery(undefined, { enabled: isAuthenticated, retry: false });
+  const listQuery = trpc.admin.listRsvps.useQuery(undefined, { enabled: isAuthenticated, retry: false });
+  const stats = statsQuery.data;
+  const rsvps = listQuery.data;
+
   const loginMutation = trpc.admin.login.useMutation({
     onSuccess: async () => {
       setPassword("");
@@ -21,16 +26,16 @@ export default function AdminPage() {
     onError: (error) => toast.error(error.message || "Mot de passe incorrect"),
   });
   const logoutMutation = trpc.admin.logout.useMutation({
-    onSuccess: () => {
-      adminMe.refetch();
-      toast.success("Espace mariés verrouillé.");
-    },
+    onSuccess: () => { adminMe.refetch(); toast.success("Espace mariés verrouillé."); },
   });
-
-  const statsQuery = trpc.admin.stats.useQuery(undefined, { enabled: isAuthenticated, retry: false });
-  const listQuery = trpc.admin.listRsvps.useQuery(undefined, { enabled: isAuthenticated, retry: false });
-  const stats = statsQuery.data;
-  const rsvps = listQuery.data;
+  const deleteRsvpMutation = trpc.admin.deleteRsvp.useMutation({
+    onSuccess: async () => { await Promise.all([statsQuery.refetch(), listQuery.refetch()]); toast.success("Confirmation supprimée."); },
+    onError: (error) => toast.error(error.message),
+  });
+  const deleteMessageMutation = trpc.admin.deleteGuestbookMessage.useMutation({
+    onSuccess: async () => { await listQuery.refetch(); toast.success("Mot d'or supprimé."); },
+    onError: (error) => toast.error(error.message),
+  });
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -39,7 +44,7 @@ export default function AdminPage() {
   };
 
   const handleExportCsv = () => {
-    if (!rsvps || rsvps.length === 0) return;
+    if (!rsvps?.length) return;
     const headers = ["Code Billet", "Nom", "Email", "Présence", "Nombre de personnes", "Message", "Date de réponse"];
     const rows = rsvps.map((r) => [
       `"${r.ticketCode}"`, `"${r.name.replace(/"/g, '""')}"`, `"${(r.email || "").replace(/"/g, '""')}"`,
@@ -54,15 +59,20 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   };
 
+  const deleteRsvp = (id: number, name: string) => {
+    if (window.confirm(`Supprimer définitivement la confirmation de ${name} ?`)) deleteRsvpMutation.mutate({ id });
+  };
+  const deleteMessage = (id: number, name: string) => {
+    if (window.confirm(`Supprimer le mot d'or laissé par ${name} ?`)) deleteMessageMutation.mutate({ id });
+  };
+
   const filtered = (rsvps || []).filter((r) => {
     const search = searchTerm.toLowerCase();
     const matchesSearch = r.name.toLowerCase().includes(search) || (r.email || "").toLowerCase().includes(search) || r.ticketCode.toLowerCase().includes(search);
     return matchesSearch && (filterAttendance === "all" || r.attendance === filterAttendance);
   });
 
-  if (adminMe.isLoading) {
-    return <div className="min-h-screen bg-[#f7f2eb] flex items-center justify-center"><Loader2 className="w-7 h-7 animate-spin text-[#9d7537]" /></div>;
-  }
+  if (adminMe.isLoading) return <div className="min-h-screen bg-[#f7f2eb] flex items-center justify-center"><Loader2 className="w-7 h-7 animate-spin text-[#9d7537]" /></div>;
 
   if (!isAuthenticated) {
     return (
@@ -85,14 +95,12 @@ export default function AdminPage() {
     );
   }
 
-  const refresh = () => { statsQuery.refetch(); listQuery.refetch(); };
-
   return (
     <div className="min-h-screen bg-[#f7f2eb] py-8 px-4 md:px-8 selection:bg-[#c69a58]/30">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#ebdcc8]">
-          <div><Link href="/" className="inline-flex items-center gap-1.5 text-xs text-[#855f24] hover:underline mb-2"><ArrowLeft className="w-3.5 h-3.5" /> Voir le site invité</Link><h1 className="font-serif-luxury text-2xl md:text-3xl font-bold text-[#2d241e]">Espace Organisation & Réponses</h1><p className="text-xs md:text-sm text-muted-foreground">Suivi privé des présences pour la dote de <strong>{WEDDING_CONFIG.bride} & {WEDDING_CONFIG.groom}</strong>.</p></div>
-          <div className="flex items-center gap-2"><button type="button" onClick={refresh} className="px-4 py-2 rounded-xl bg-white border border-[#ebdcc8] text-xs font-semibold text-[#5a4632] hover:bg-muted transition-colors flex items-center gap-1.5 cursor-pointer"><RefreshCw className="w-3.5 h-3.5" /> Actualiser</button><button type="button" onClick={handleExportCsv} disabled={!rsvps?.length} className="px-4 py-2 rounded-xl gold-gradient text-white text-xs font-semibold shadow hover:brightness-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"><Download className="w-3.5 h-3.5" /> Exporter CSV</button><button type="button" onClick={() => logoutMutation.mutate()} className="px-4 py-2 rounded-xl border border-[#ebdcc8] bg-white text-xs font-semibold text-[#7c6d62] hover:text-rose-700 cursor-pointer">Verrouiller</button></div>
+          <div><Link href="/" className="inline-flex items-center gap-1.5 text-xs text-[#855f24] hover:underline mb-2"><ArrowLeft className="w-3.5 h-3.5" /> Voir le site invité</Link><h1 className="font-serif-luxury text-2xl md:text-3xl font-bold text-[#2d241e]">Espace Organisation & Réponses</h1><p className="text-xs md:text-sm text-muted-foreground">Suivi privé des présences pour la dot de <strong>{WEDDING_CONFIG.bride} & {WEDDING_CONFIG.groom}</strong>.</p></div>
+          <div className="flex items-center gap-2 flex-wrap"><button type="button" onClick={() => { statsQuery.refetch(); listQuery.refetch(); }} className="px-4 py-2 rounded-xl bg-white border border-[#ebdcc8] text-xs font-semibold text-[#5a4632] hover:bg-muted transition-colors flex items-center gap-1.5 cursor-pointer"><RefreshCw className="w-3.5 h-3.5" /> Actualiser</button><button type="button" onClick={handleExportCsv} disabled={!rsvps?.length} className="px-4 py-2 rounded-xl gold-gradient text-white text-xs font-semibold shadow hover:brightness-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"><Download className="w-3.5 h-3.5" /> Exporter CSV</button><button type="button" onClick={() => logoutMutation.mutate()} className="px-4 py-2 rounded-xl border border-[#ebdcc8] bg-white text-xs font-semibold text-[#7c6d62] hover:text-rose-700 cursor-pointer">Verrouiller</button></div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -103,8 +111,8 @@ export default function AdminPage() {
         </div>
 
         <div className="card-luxury rounded-3xl p-6 border-[#ebdcc8]">
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6"><div className="relative flex-1 max-w-md"><Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" /><input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Rechercher par nom, code de billet..." className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#ebdcc8] bg-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#c69a58]" /></div><div className="flex items-center gap-2"><span className="text-xs text-muted-foreground">Filtrer :</span>{(["all", "yes", "no"] as const).map((filter) => <button key={filter} type="button" onClick={() => setFilterAttendance(filter)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${filterAttendance === filter ? "bg-[#2d241e] text-white" : "bg-white border border-[#ebdcc8] text-[#5a4632]"}`}>{filter === "all" ? `Tous (${rsvps?.length || 0})` : filter === "yes" ? `Présents (${stats?.attendingResponses || 0})` : `Absents (${stats?.declinedResponses || 0})`}</button>)}</div></div>
-          {listQuery.isLoading ? <div className="py-16 text-center text-muted-foreground flex flex-col items-center gap-2"><Loader2 className="w-6 h-6 animate-spin text-[#9d7537]" /><span className="text-xs">Chargement des invités...</span></div> : filtered.length === 0 ? <div className="py-16 text-center text-muted-foreground text-xs">Aucune réponse ne correspond aux critères.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-xs md:text-sm"><thead><tr className="border-b border-[#ebdcc8] text-[11px] uppercase tracking-wider text-muted-foreground"><th className="py-3 px-3">Billet</th><th className="py-3 px-3">Nom de l'invité</th><th className="py-3 px-3">Statut</th><th className="py-3 px-3 text-center">Convives</th><th className="py-3 px-3">Message</th><th className="py-3 px-3">Date</th></tr></thead><tbody className="divide-y divide-[#ebdcc8]/60">{filtered.map((item) => <tr key={item.id} className="hover:bg-white/60 transition-colors"><td className="py-3.5 px-3"><Link href={`/billet/${item.ticketCode}`} className="font-mono font-bold text-[#855f24] hover:underline">{item.ticketCode}</Link></td><td className="py-3.5 px-3"><div className="font-medium text-[#2d241e]">{item.name}</div>{item.email && <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5"><Mail className="w-3 h-3" /> {item.email}</span>}</td><td className="py-3.5 px-3">{item.attendance === "yes" ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold"><CheckCircle className="w-3 h-3" /> Présent</span> : <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold">Absent</span>}</td><td className="py-3.5 px-3 text-center font-bold text-[#2d241e]">{item.attendance === "yes" ? item.guestsCount : 0}</td><td className="py-3.5 px-3 max-w-xs text-xs text-[#5a4632] italic truncate">{item.message || <span className="text-muted-foreground not-italic">—</span>}</td><td className="py-3.5 px-3 text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td></tr>)}</tbody></table></div>}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6"><div className="relative flex-1 max-w-md"><Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" /><input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Rechercher par nom, code de billet..." className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#ebdcc8] bg-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#c69a58]" /></div><div className="flex items-center gap-2 flex-wrap"><span className="text-xs text-muted-foreground">Filtrer :</span>{(["all", "yes", "no"] as const).map((filter) => <button key={filter} type="button" onClick={() => setFilterAttendance(filter)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${filterAttendance === filter ? "bg-[#2d241e] text-white" : "bg-white border border-[#ebdcc8] text-[#5a4632]"}`}>{filter === "all" ? `Tous (${rsvps?.length || 0})` : filter === "yes" ? `Présents (${stats?.attendingResponses || 0})` : `Absents (${stats?.declinedResponses || 0})`}</button>)}</div></div>
+          {listQuery.isLoading ? <div className="py-16 text-center text-muted-foreground flex flex-col items-center gap-2"><Loader2 className="w-6 h-6 animate-spin text-[#9d7537]" /><span className="text-xs">Chargement des invités...</span></div> : filtered.length === 0 ? <div className="py-16 text-center text-muted-foreground text-xs">Aucune réponse ne correspond aux critères.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-xs md:text-sm"><thead><tr className="border-b border-[#ebdcc8] text-[11px] uppercase tracking-wider text-muted-foreground"><th className="py-3 px-3">Billet</th><th className="py-3 px-3">Nom de l'invité</th><th className="py-3 px-3">Statut</th><th className="py-3 px-3 text-center">Convives</th><th className="py-3 px-3">Message</th><th className="py-3 px-3">Date</th><th className="py-3 px-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-[#ebdcc8]/60">{filtered.map((item) => <tr key={item.id} className="hover:bg-white/60 transition-colors"><td className="py-3.5 px-3"><Link href={`/billet/${item.ticketCode}`} className="font-mono font-bold text-[#855f24] hover:underline">{item.ticketCode}</Link></td><td className="py-3.5 px-3"><div className="font-medium text-[#2d241e]">{item.name}</div>{item.email && <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5"><Mail className="w-3 h-3" /> {item.email}</span>}</td><td className="py-3.5 px-3">{item.attendance === "yes" ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold"><CheckCircle className="w-3 h-3" /> Présent</span> : <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold">Absent</span>}</td><td className="py-3.5 px-3 text-center font-bold text-[#2d241e]">{item.attendance === "yes" ? item.guestsCount : 0}</td><td className="py-3.5 px-3 max-w-xs text-xs text-[#5a4632] italic truncate">{item.message || <span className="text-muted-foreground not-italic">—</span>}</td><td className="py-3.5 px-3 text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td><td className="py-3.5 px-3"><div className="flex items-center justify-end gap-1"><button type="button" onClick={() => item.message && deleteMessage(item.id, item.name)} disabled={!item.message || deleteMessageMutation.isPending} className="p-2 rounded-lg text-[#9d7537] hover:bg-[#f4ede1] disabled:opacity-30 cursor-pointer" title="Supprimer le mot d'or"><Trash2 className="w-3.5 h-3.5" /></button><button type="button" onClick={() => deleteRsvp(item.id, item.name)} disabled={deleteRsvpMutation.isPending} className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer" title="Supprimer la confirmation"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>)}</tbody></table></div>}
         </div>
       </div>
     </div>

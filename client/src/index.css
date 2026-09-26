@@ -86,3 +86,9 @@
 @media (prefers-reduced-motion: reduce) {
   .falling-petal, .animate-bounce { animation: none !important; }
 }
+
+@media print {
+  body * { visibility: hidden !important; }
+  .ticket-print-area, .ticket-print-area * { visibility: visible !important; }
+  .ticket-print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; }
+}

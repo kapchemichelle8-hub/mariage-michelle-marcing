@@ -12,6 +12,7 @@ export function RsvpFormSection() {
   const [guestsCount, setGuestsCount] = useState<number>(1);
   const [message, setMessage] = useState("");
   const [generatedTicket, setGeneratedTicket] = useState<TicketData | null>(null);
+  const [declinedSent, setDeclinedSent] = useState(false);
 
   const submitMutation = trpc.wedding.submitRsvp.useMutation({
     onSuccess: (data) => {
@@ -24,7 +25,8 @@ export function RsvpFormSection() {
         });
         toast.success("Votre présence est confirmée ! Voici votre billet officiel.");
       } else {
-        toast.info("Merci infiniment pour vos vœux et votre réponse attentionnée !");
+        setDeclinedSent(true);
+        toast.info("Votre réponse a bien été enregistrée.");
         setName("");
         setEmail("");
         setMessage("");
@@ -46,7 +48,7 @@ export function RsvpFormSection() {
       name: name.trim(),
       email: email.trim() || undefined,
       attendance,
-      guestsCount: attendance === "yes" ? guestsCount : 0,
+      guestsCount: attendance === "yes" ? guestsCount : 1,
       message: message.trim() || undefined,
     });
   };
@@ -64,7 +66,21 @@ export function RsvpFormSection() {
           </p>
         </div>
 
-        {generatedTicket ? (
+        {declinedSent ? (
+          <div className="card-luxury p-8 md:p-10 rounded-3xl text-center animate-scale-in">
+            <div className="w-14 h-14 rounded-full bg-[#f4ede1] border border-[#c69a58]/40 flex items-center justify-center mx-auto mb-5">
+              <Heart className="w-7 h-7 text-[#9d7537] fill-[#c69a58]/30" />
+            </div>
+            <p className="font-script text-3xl text-[#9d7537] mb-2">Votre soutien nous touche</p>
+            <h3 className="font-serif-luxury text-xl md:text-2xl font-bold text-[#2d241e] mb-4">Cela nous fait de la peine de ne pas vous avoir avec nous.</h3>
+            <p className="text-sm text-[#5a4632] leading-relaxed max-w-xl mx-auto">
+              Nous vous partagerons toute la fête par la pensée et comptons sur votre soutien d'une autre manière : une prière, une bénédiction ou toute autre attention qui vous tient à cœur. Merci pour votre affection envers Michelle & Marcing.
+            </p>
+            <button type="button" onClick={() => setDeclinedSent(false)} className="mt-7 px-5 py-2.5 rounded-full border border-[#c69a58]/50 text-[#855f24] text-xs font-semibold hover:bg-[#f4ede1] transition-colors cursor-pointer">
+              Modifier ma réponse
+            </button>
+          </div>
+        ) : generatedTicket ? (
           <div className="card-luxury p-6 md:p-8 rounded-3xl animate-scale-in">
             <div className="text-center mb-4">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">
@@ -99,7 +115,7 @@ export function RsvpFormSection() {
           <form onSubmit={handleSubmit} className="card-luxury p-6 md:p-10 rounded-3xl shadow-xl space-y-6">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#7c6d62] mb-3">
-                Serez-vous avec nous pour célébrer notre dote ? *
+                Serez-vous avec nous pour célébrer notre dot ? *
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button type="button" onClick={() => setAttendance("yes")} className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all cursor-pointer ${attendance === "yes" ? "border-[#c69a58] bg-[#fdf9f3] text-[#855f24] shadow-sm font-semibold" : "border-[#ebdcc8] hover:border-[#c69a58]/50 text-[#5a4632]"}`}>
@@ -114,12 +130,12 @@ export function RsvpFormSection() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#7c6d62] mb-1.5">Votre Nom & Prénom(s) ou Nom de Famille *</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#7c6d62] mb-1.5">Votre nom complet ou nom de famille *</label>
               <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex : M. & Mme Fokou ou Michelle Ngassa" className="w-full px-4 py-3 rounded-xl border border-[#ebdcc8] bg-[#ffffff] focus:outline-none focus:ring-2 focus:ring-[#c69a58] text-sm" />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#7c6d62] mb-1.5">Adresse Email (optionnelle)</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#7c6d62] mb-1.5">Adresse e-mail (facultative)</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Pour garder une copie de votre billet officiel" className="w-full px-4 py-3 rounded-xl border border-[#ebdcc8] bg-[#ffffff] focus:outline-none focus:ring-2 focus:ring-[#c69a58] text-sm" />
             </div>
 

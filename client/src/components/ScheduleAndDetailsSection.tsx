@@ -26,6 +26,8 @@ export function ScheduleAndDetailsSection() {
               <img
                 src={WEDDING_CONFIG.assets.bridePortrait}
                 alt="Michelle - La Mariée"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </div>
@@ -46,6 +48,8 @@ export function ScheduleAndDetailsSection() {
               <img
                 src={WEDDING_CONFIG.assets.groomPortrait}
                 alt="Marcing - Le Marié"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </div>
@@ -81,20 +85,22 @@ export function ScheduleAndDetailsSection() {
             Quand & Où ?
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            Notre événement aura lieu dans un cadre intime, entouré de nos proches. La cérémonie se tiendra dans la maison familiale à Bafoussam, suivie d’une grande fête et d'un apéro chez les parents du marié.
+            Notre célébration aura lieu au Centre climatique de Bandjoun, entourés de nos familles et de nos proches. Depuis le Centre climatique, prenez la moto et dites : « Mission protestante de Nlem », la maison est juste à côté.
           </p>
         </div>
 
-        {/* Cadre paysager Bafoussam */}
+        {/* Cadre paysager de Bandjoun */}
         <div className="relative rounded-3xl overflow-hidden mb-12 shadow-lg border border-[#ebdcc8] max-h-72">
           <img
-            src={WEDDING_CONFIG.assets.bafoussamLandscape}
-            alt="Paysage de l'Ouest Cameroun - Bafoussam"
+            src={WEDDING_CONFIG.assets.bandjounLandscape}
+            alt="Paysage de l'Ouest Cameroun - Bandjoun"
+            loading="lazy"
+            decoding="async"
             className="w-full h-72 object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 md:p-10 text-white">
             <span className="inline-flex items-center gap-1.5 text-xs tracking-wider uppercase font-semibold text-[#f8eedd]">
-              <MapPin className="w-3.5 h-3.5" /> Bafoussam, Région de l'Ouest Cameroun
+              <MapPin className="w-3.5 h-3.5" /> Bandjoun, Région de l'Ouest Cameroun
             </span>
             <h3 className="font-serif-luxury text-2xl md:text-3xl font-bold mt-1">
               Terre de traditions, de bénédictions et de joie
@@ -110,10 +116,12 @@ export function ScheduleAndDetailsSection() {
               className="card-luxury rounded-3xl overflow-hidden flex flex-col border-[#ebdcc8] hover:border-[#c69a58] transition-all group"
             >
               <div className="h-48 overflow-hidden relative">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-bold text-[#855f24] uppercase tracking-wider">
                   {item.tag}
@@ -163,6 +171,8 @@ export function ScheduleAndDetailsSection() {
                 <img
                   src={WEDDING_CONFIG.assets.videoPoster}
                   alt="Aperçu vidéo du mariage"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
                 <button
@@ -182,6 +192,7 @@ export function ScheduleAndDetailsSection() {
                 src={WEDDING_CONFIG.assets.videoUrl}
                 controls
                 autoPlay
+                preload="metadata"
                 className="w-full h-full object-cover"
               />
             )}

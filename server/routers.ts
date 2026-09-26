@@ -92,7 +92,7 @@ export const appRouter = router({
       .input(
         z.object({
           name: z.string().trim().min(2, "Veuillez renseigner votre nom complet"),
-          email: z.string().trim().email("Adresse email invalide").optional().or(z.literal("")),
+          email: z.string().trim().email("Adresse e-mail invalide").optional().or(z.literal("")),
           attendance: z.enum(["yes", "no"]),
           guestsCount: z.number().int().min(1).max(10).default(1),
           message: z.string().trim().max(1000).optional().or(z.literal("")),
@@ -150,6 +150,18 @@ export const appRouter = router({
 
     listRsvps: adminSessionProcedure.query(async () => db.getAllRsvps()),
     stats: adminSessionProcedure.query(async () => db.getPublicWeddingStats()),
+    deleteRsvp: adminSessionProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.deleteRsvp(input.id);
+        return { success: true } as const;
+      }),
+    deleteGuestbookMessage: adminSessionProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.deleteGuestbookMessage(input.id);
+        return { success: true } as const;
+      }),
   }),
 });
 

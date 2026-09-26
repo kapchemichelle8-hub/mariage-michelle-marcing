@@ -1,6 +1,7 @@
 import { Bird, Calendar, ChevronDown, Heart, LockKeyhole, Sparkles, UserCheck } from "lucide-react";
 import { Link } from "wouter";
 import { CountdownSection } from "../components/CountdownSection";
+import { GiftsSection } from "../components/GiftsSection";
 import { GuestbookSection } from "../components/GuestbookSection";
 import { RsvpFormSection } from "../components/RsvpFormSection";
 import { ScheduleAndDetailsSection } from "../components/ScheduleAndDetailsSection";
@@ -57,7 +58,7 @@ export default function Home() {
 
       <main>
         <section className="hero-reference relative min-h-[680px] md:min-h-[760px] flex items-center justify-center overflow-visible">
-          <img src={WEDDING_CONFIG.assets.heroCouple} alt="Michelle et Marcing" className="absolute inset-0 w-full h-full object-cover object-center" />
+          <img src={WEDDING_CONFIG.assets.heroCouple} alt="Michelle et Marcing" fetchPriority="high" decoding="async" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="hero-reference-overlay absolute inset-0" />
           <FallingPetals />
 
@@ -77,13 +78,13 @@ export default function Home() {
               Répondre à l'invitation
             </button>
             <div className="mt-6 text-[10px] md:text-xs tracking-[0.28em] uppercase text-white/90 whitespace-nowrap drop-shadow">
-              Bafoussam • 26 Décembre 2026
+              Bandjoun • 26 Décembre 2026
             </div>
           </div>
 
           <div className="hero-heart-portraits absolute z-20 bottom-[-52px] left-1/2 -translate-x-1/2 flex items-center justify-center">
-            <div className="heart-photo heart-photo-left"><img src={WEDDING_CONFIG.assets.bridePortrait} alt="Michelle" /></div>
-            <div className="heart-photo heart-photo-right"><img src={WEDDING_CONFIG.assets.groomPortrait} alt="Marcing" /></div>
+            <div className="heart-photo heart-photo-left"><img src={WEDDING_CONFIG.assets.bridePortrait} alt="Michelle" decoding="async" /></div>
+            <div className="heart-photo heart-photo-right"><img src={WEDDING_CONFIG.assets.groomPortrait} alt="Marcing" decoding="async" /></div>
           </div>
         </section>
 
@@ -94,6 +95,7 @@ export default function Home() {
 
         <CountdownSection />
         <ScheduleAndDetailsSection />
+        <GiftsSection />
         <GuestbookSection />
         <RsvpFormSection />
       </main>
@@ -101,7 +103,7 @@ export default function Home() {
       <footer className="mt-auto py-12 px-4 bg-[#231b16] text-[#dfd4c8] text-center border-t border-[#3d2e23]">
         <div className="max-w-4xl mx-auto space-y-4">
           <p className="font-script text-4xl text-[#d8ab66]">{WEDDING_CONFIG.bride} & {WEDDING_CONFIG.groom}</p>
-          <p className="font-serif-luxury text-xs uppercase tracking-widest text-[#a8998a]">26 Décembre 2026 • Bafoussam, Cameroun</p>
+          <p className="font-serif-luxury text-xs uppercase tracking-widest text-[#a8998a]">26 Décembre 2026 • Bandjoun, Cameroun</p>
           <p className="text-xs text-[#908275] max-w-md mx-auto">Nous avons hâte de vous retrouver pour fêter ce grand amour en famille et entre amis !</p>
           <div className="pt-6 border-t border-white/10 flex items-center justify-center gap-4 text-[11px] text-[#736559]"><Link href="/admin" className="hover:text-[#d8ab66] transition-colors flex items-center gap-1.5"><LockKeyhole className="w-3 h-3" /> Accès réservé aux mariés</Link></div>
         </div>
