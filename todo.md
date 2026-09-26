@@ -9,4 +9,4 @@
 - [x] Ajouter la suppression sécurisée des confirmations et des mots d’or.
 - [x] Supprimer les données de test existantes dans la base RSVP.
 - [x] Optimiser les images principales en WebP et activer le chargement différé.
-- [ ] Vérifier le rendu final après compilation et créer le checkpoint de livraison.
+- [x] Vérifier le rendu final après compilation et créer le checkpoint de livraison.
