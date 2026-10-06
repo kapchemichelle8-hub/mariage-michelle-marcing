@@ -37,12 +37,20 @@
 
 @layer base {
   * { @apply border-border outline-ring/40; }
-  body { @apply bg-background text-foreground; font-family: 'Plus Jakarta Sans', sans-serif; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-image: radial-gradient(circle at 50% 0%, rgba(216, 171, 102, 0.08) 0%, transparent 45%),
+                      radial-gradient(circle at 10% 40%, rgba(244, 237, 225, 0.6) 0%, transparent 40%),
+                      radial-gradient(circle at 90% 80%, rgba(216, 171, 102, 0.06) 0%, transparent 45%);
+    background-attachment: fixed;
+  }
 }
 
 .gold-gradient { background: linear-gradient(135deg, #d8ab66 0%, #aa7b38 50%, #cfa05d 100%); }
 .gold-text-gradient { background: linear-gradient(135deg, #a47632 0%, #d8ab66 40%, #875c1d 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.card-luxury { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); border: 1px solid rgba(198, 154, 88, 0.28); box-shadow: 0 10px 30px -10px rgba(80, 52, 24, 0.08); }
+.card-luxury { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); border: 1px solid rgba(198, 154, 88, 0.28); box-shadow: 0 10px 30px -10px rgba(80, 52, 24, 0.08); transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.35s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.35s ease; }
+.card-luxury:hover { box-shadow: 0 16px 36px -12px rgba(80, 52, 24, 0.14); }
 
 .hero-reference { background: #261b15; }
 .hero-reference-overlay { background: linear-gradient(180deg, rgba(20, 11, 7, 0.28) 0%, rgba(33, 19, 13, 0.52) 55%, rgba(20, 10, 6, 0.82) 100%); }
@@ -52,6 +60,11 @@
   width: 260px;
   height: 140px;
   pointer-events: none;
+  animation: floatSoft 6s ease-in-out infinite;
+}
+@keyframes floatSoft {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -6px); }
 }
 .heart-photo {
   width: 126px;
@@ -84,7 +97,7 @@
 @keyframes fallingPetal { 0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 0; } 12% { opacity: .85; } 60% { transform: translate3d(38px, 58vh, 0) rotate(190deg); } 100% { transform: translate3d(-24px, 118vh, 0) rotate(380deg); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .falling-petal, .animate-bounce { animation: none !important; }
+  .falling-petal, .animate-bounce, .hero-heart-portraits { animation: none !important; }
 }
 
 @media print {

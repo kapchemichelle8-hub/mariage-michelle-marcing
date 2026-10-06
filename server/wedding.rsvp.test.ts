@@ -35,5 +35,10 @@ describe("wedding.submitRsvp", () => {
     expect(ticket?.name).toBe("Tantine Marie & Oncle Jean");
     expect(ticket?.guestsCount).toBe(2);
     expect(ticket?.side).toBe("bride");
+
+    if (ticket?.id) {
+      const { deleteRsvp } = await import("./db");
+      await deleteRsvp(ticket.id);
+    }
   });
 });
