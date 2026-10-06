@@ -48,7 +48,7 @@ export default function TicketPage() {
             name: ticket.name,
             guestsCount: ticket.guestsCount,
             attendance: ticket.attendance,
-            email: ticket.email ?? undefined,
+            side: ticket.side,
             createdAt: ticket.createdAt,
           }}
         />

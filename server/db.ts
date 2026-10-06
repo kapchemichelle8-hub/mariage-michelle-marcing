@@ -91,13 +91,16 @@ export async function deleteGuestbookMessage(id: number) {
 
 export async function getPublicWeddingStats() {
   const db = await getDb();
-  if (!db) return { attendingResponses: 0, totalGuests: 0, declinedResponses: 0, totalResponses: 0 };
+  if (!db) return { attendingResponses: 0, totalGuests: 0, declinedResponses: 0, totalResponses: 0, brideGuests: 0, groomGuests: 0 };
   const rows = await db.select().from(rsvps);
   const attending = rows.filter((r) => r.attendance === "yes");
   const declined = rows.filter((r) => r.attendance === "no");
+  const countGuests = (list: typeof rows) => list.reduce((acc, curr) => acc + (curr.guestsCount || 1), 0);
   return {
     attendingResponses: attending.length,
-    totalGuests: attending.reduce((acc, curr) => acc + (curr.guestsCount || 1), 0),
+    totalGuests: countGuests(attending),
+    brideGuests: countGuests(attending.filter((r) => r.side === "bride")),
+    groomGuests: countGuests(attending.filter((r) => r.side === "groom")),
     declinedResponses: declined.length,
     totalResponses: rows.length,
   };
