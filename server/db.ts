@@ -17,6 +17,26 @@ export async function getDb() {
   return _db;
 }
 
+/**
+ * Ajoute la colonne `side` si la base n'a pas encore reçu la migration 0002,
+ * pour que le formulaire fonctionne même si l'hébergeur n'applique pas les migrations.
+ */
+export async function ensureRsvpSideColumn() {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    const [rows] = (await db.execute(
+      sql`SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'rsvps' AND COLUMN_NAME = 'side'`
+    )) as unknown as [Array<{ n: number | string }>];
+    if (Number(rows[0]?.n) === 0) {
+      await db.execute(sql`ALTER TABLE \`rsvps\` ADD \`side\` enum('bride','groom')`);
+      console.log("[Database] Colonne rsvps.side ajoutée");
+    }
+  } catch (error) {
+    console.warn("[Database] Vérification de la colonne rsvps.side impossible:", error);
+  }
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();

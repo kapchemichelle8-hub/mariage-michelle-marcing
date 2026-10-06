@@ -96,7 +96,7 @@ export function ScheduleAndDetailsSection() {
             Quand & Où ?
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            Notre grand jour se déroulera à Bandjoun, de la cérémonie civile jusqu'aux réjouissances de la nuit, entourés de nos familles et de nos proches. Pour la célébration traditionnelle : depuis le Centre climatique, prenez une moto et demandez la Mission protestante de Nlem, la maison se trouve juste à côté.
+            Notre grand jour se déroulera à Bandjoun, entourés de nos familles et de nos proches : mariage civil à la mairie de Pète-Bandjoun, vin d'honneur à la petite salle de la paroisse de Mboa, puis messe et célébration traditionnelle à notre domicile de Nlem, à côté de la Mission protestante. Depuis le Centre climatique, prenez une moto et demandez la Mission protestante de Nlem : la maison se trouve juste à côté.
           </p>
         </div>
 
@@ -146,6 +146,10 @@ export function ScheduleAndDetailsSection() {
                     </h4>
                     <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mt-1.5">
                       {item.description}
+                    </p>
+                    <p className={`mt-3 pt-3 border-t border-[#ebdcc8] flex items-center gap-1.5 text-xs font-medium text-[#5a4632] ${idx % 2 === 0 ? "md:justify-end" : ""}`}>
+                      <MapPin className="w-3.5 h-3.5 text-[#9d7537] shrink-0" />
+                      <span>{item.location}</span>
                     </p>
                   </div>
                 </div>
