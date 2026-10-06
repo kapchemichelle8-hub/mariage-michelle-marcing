@@ -96,7 +96,7 @@ export function ScheduleAndDetailsSection() {
             Quand & Où ?
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            Notre grand jour se déroulera à Bandjoun, entourés de nos familles et de nos proches : mariage civil à la mairie de Pète-Bandjoun (Bandjoun), vin d'honneur à la petite salle de la paroisse de Mboa (Bandjoun), puis messe d'action de grâce et début de la cérémonie traditionnelle à notre domicile de Nlem, à côté de la Mission protestante (Bandjoun). Depuis le Centre climatique de Bandjoun, prenez une moto et demandez la Mission protestante de Nlem : la maison se trouve juste à côté.
+            Notre grand jour se déroulera à Bandjoun, entourés de nos familles et de nos proches : mariage civil à la mairie de Pète-Bandjoun, vin d'honneur à la petite salle de la paroisse de Mboa, puis messe et célébration traditionnelle à notre domicile de Nlem, à côté de la Mission protestante. Depuis le Centre climatique, prenez une moto et demandez la Mission protestante de Nlem : la maison se trouve juste à côté.
           </p>
         </div>
 
@@ -136,7 +136,7 @@ export function ScheduleAndDetailsSection() {
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className={`md:w-1/2 ${idx % 2 === 0 ? "md:pr-14 md:text-right" : "md:ml-auto md:pl-14"}`}>
-                  <div className="card-luxury rounded-2xl p-5 hover:border-[#c69a58] hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
+                  <div className="card-luxury rounded-2xl p-5 hover:border-[#c69a58] hover:-translate-y-0.5 hover:shadow-xl transition-all">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4ede1] text-[#855f24] text-xs font-bold tracking-wider mb-2">
                       <Clock className="w-3.5 h-3.5" />
                       <span>{item.end ? `${item.start} – ${item.end}` : `Dès ${item.start}`}</span>

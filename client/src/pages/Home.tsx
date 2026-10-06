@@ -74,7 +74,7 @@ export default function Home() {
             <p className="mt-8 text-sm md:text-lg font-semibold leading-relaxed max-w-xl drop-shadow-lg">
               Nous vous invitons à être à nos côtés pour<br className="hidden md:block" /> le début de ce nouveau chapitre, et à<br className="hidden md:block" /> partager avec nous chaque instant de cet<br className="hidden md:block" /> événement inoubliable !
             </p>
-            <button type="button" onClick={scrollToRsvp} className="mt-8 px-8 py-3.5 rounded-full bg-white text-[#855f24] font-serif-luxury text-xs md:text-sm font-bold shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer border border-[#c69a58]/40">
+            <button type="button" onClick={scrollToRsvp} className="mt-8 px-6 py-3 rounded-full bg-white/95 text-[#855f24] font-serif-luxury text-xs md:text-sm font-bold shadow-xl hover:bg-white active:scale-95 transition-all cursor-pointer">
               Répondre à l'invitation
             </button>
             <div className="mt-6 text-[10px] md:text-xs tracking-[0.28em] uppercase text-white/90 whitespace-nowrap drop-shadow">
