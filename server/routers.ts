@@ -4,7 +4,6 @@ import { TRPCError } from "@trpc/server";
 import { parse as parseCookie } from "cookie";
 import { z } from "zod";
 import * as db from "./db";
-import { sendTicketEmail } from "./email";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
@@ -96,7 +95,9 @@ export const appRouter = router({
       .input(
         z.object({
           name: z.string().trim().min(2, "Veuillez renseigner votre nom complet"),
-          email: z.string().trim().email("Adresse e-mail invalide").optional().or(z.literal("")),
+          side: z.enum(["bride", "groom"], {
+            message: "Veuillez indiquer si vous êtes invité(e) de la mariée ou du marié",
+          }),
           attendance: z.enum(["yes", "no"]),
           guestsCount: z.number().int().min(1).max(10).default(1),
           message: z.string().trim().max(1000).optional().or(z.literal("")),
@@ -106,22 +107,17 @@ export const appRouter = router({
         const ticketCode = generateTicketCode();
         const saved = await db.createRsvp({
           name: input.name,
-          email: input.email || null,
+          side: input.side,
           attendance: input.attendance,
           guestsCount: input.attendance === "yes" ? input.guestsCount : 0,
           message: input.message || null,
           ticketCode,
         });
-        const emailSent = input.attendance === "yes" && Boolean(input.email)
-          ? await sendTicketEmail({ recipient: input.email!, name: input.name, guestsCount: input.guestsCount, ticketCode })
-          : false;
-
         return {
           success: true,
           rsvp: saved,
           ticketCode,
           attendance: input.attendance,
-          emailSent,
           message:
             input.attendance === "yes"
               ? "Votre présence a été enregistrée avec succès. Voici votre billet d'invitation officiel !"

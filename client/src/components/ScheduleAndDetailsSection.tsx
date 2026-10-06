@@ -1,6 +1,17 @@
-import { Calendar, Clock, Heart, MapPin, Play, Sparkles } from "lucide-react";
+import { Car, Church, Clock, Coffee, Heart, MapPin, Music, Camera, Play, Scale, Wine } from "lucide-react";
 import { useState } from "react";
 import { WEDDING_CONFIG } from "../weddingConfig";
+
+const SCHEDULE_ICONS = {
+  civil: Scale,
+  photo: Camera,
+  toast: Wine,
+  travel: Car,
+  church: Church,
+  break: Coffee,
+  tradition: Heart,
+  party: Music,
+} as const;
 
 export function ScheduleAndDetailsSection() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -85,7 +96,7 @@ export function ScheduleAndDetailsSection() {
             Quand & Où ?
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            Notre célébration aura lieu à Bandjoun, à côté de la Mission protestante de Nlem, entourés de nos familles et de nos proches. Depuis le Centre climatique, prenez une moto et demandez la Mission protestante de Nlem : la maison se trouve juste à côté.
+            Notre grand jour se déroulera à Bandjoun, entourés de nos familles et de nos proches : mariage civil à la mairie de Pète-Bandjoun, vin d'honneur à la petite salle de la paroisse de Mboa, puis messe et célébration traditionnelle à notre domicile de Nlem, à côté de la Mission protestante. Depuis le Centre climatique, prenez une moto et demandez la Mission protestante de Nlem : la maison se trouve juste à côté.
           </p>
         </div>
 
@@ -108,48 +119,44 @@ export function ScheduleAndDetailsSection() {
           </div>
         </div>
 
-        {/* 3 temps forts */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {WEDDING_CONFIG.schedule.map((item, idx) => (
-            <div
-              key={idx}
-              className="card-luxury rounded-3xl overflow-hidden flex flex-col border-[#ebdcc8] hover:border-[#c69a58] transition-all group"
-            >
-              <div className="h-48 overflow-hidden relative">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-bold text-[#855f24] uppercase tracking-wider">
-                  {item.tag}
-                </div>
-              </div>
-
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-[#9d7537] text-xs font-bold uppercase tracking-wider mb-2">
-                    <Clock className="w-4 h-4" />
-                    <span>26.12.2026 | {item.time}</span>
-                  </div>
-                  <h3 className="font-serif-luxury text-lg font-bold text-[#2d241e] mb-2 leading-snug">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                    {item.description}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-[#ebdcc8] flex items-center gap-1.5 text-xs text-[#5a4632] font-medium">
-                  <MapPin className="w-3.5 h-3.5 text-[#9d7537] shrink-0" />
-                  <span className="truncate">{item.location}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Programme de la journée */}
+        <div className="text-center mb-10">
+          <p className="font-script text-3xl md:text-4xl text-[#9d7537]">Le déroulé de la journée</p>
+          <h3 className="font-serif-luxury text-xl md:text-3xl font-bold tracking-wide text-[#2d241e] mt-1">
+            Programme du {WEDDING_CONFIG.dateString}
+          </h3>
         </div>
+
+        <ol className="schedule-timeline relative max-w-3xl mx-auto">
+          {WEDDING_CONFIG.schedule.map((item, idx) => {
+            const Icon = SCHEDULE_ICONS[item.icon as keyof typeof SCHEDULE_ICONS] ?? Heart;
+            return (
+              <li key={idx} className="schedule-item relative pl-16 md:pl-0 pb-8 last:pb-0">
+                <div className="schedule-dot absolute left-0 md:left-1/2 md:-translate-x-1/2 top-0 w-12 h-12 rounded-full gold-gradient flex items-center justify-center text-white shadow-lg ring-4 ring-[#faf7f2] z-10">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className={`md:w-1/2 ${idx % 2 === 0 ? "md:pr-14 md:text-right" : "md:ml-auto md:pl-14"}`}>
+                  <div className="card-luxury rounded-2xl p-5 hover:border-[#c69a58] hover:-translate-y-0.5 hover:shadow-xl transition-all">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4ede1] text-[#855f24] text-xs font-bold tracking-wider mb-2">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{item.end ? `${item.start} – ${item.end}` : `Dès ${item.start}`}</span>
+                    </div>
+                    <h4 className="font-serif-luxury text-base md:text-lg font-bold text-[#2d241e] leading-snug">
+                      {item.title}
+                    </h4>
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mt-1.5">
+                      {item.description}
+                    </p>
+                    <p className={`mt-3 pt-3 border-t border-[#ebdcc8] flex items-center gap-1.5 text-xs font-medium text-[#5a4632] ${idx % 2 === 0 ? "md:justify-end" : ""}`}>
+                      <MapPin className="w-3.5 h-3.5 text-[#9d7537] shrink-0" />
+                      <span>{item.location}</span>
+                    </p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       </section>
 
       {/* Section Vidéo d'Ambiance */}

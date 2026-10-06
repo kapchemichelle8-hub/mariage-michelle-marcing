@@ -20,7 +20,7 @@ describe("wedding.submitRsvp", () => {
     const caller = appRouter.createCaller(createMockContext());
     const result = await caller.wedding.submitRsvp({
       name: "Tantine Marie & Oncle Jean",
-      email: "marie.jean@example.com",
+      side: "bride",
       attendance: "yes",
       guestsCount: 2,
       message: "Que du bonheur pour cette magnifique célébration !",
@@ -34,5 +34,6 @@ describe("wedding.submitRsvp", () => {
     expect(ticket).toBeDefined();
     expect(ticket?.name).toBe("Tantine Marie & Oncle Jean");
     expect(ticket?.guestsCount).toBe(2);
+    expect(ticket?.side).toBe("bride");
   });
 });

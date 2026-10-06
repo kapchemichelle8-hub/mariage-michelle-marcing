@@ -22,6 +22,8 @@ export const rsvps = mysqlTable("rsvps", {
   name: varchar("name", { length: 160 }).notNull(),
   email: varchar("email", { length: 320 }),
   attendance: mysqlEnum("attendance", ["yes", "no"]).notNull(),
+  /** Côté de l'invité : famille/amis de la mariée ou du marié. Nul pour les anciennes réponses. */
+  side: mysqlEnum("side", ["bride", "groom"]),
   guestsCount: int("guestsCount").default(1).notNull(),
   message: text("message"),
   ticketCode: varchar("ticketCode", { length: 32 }).notNull().unique(),

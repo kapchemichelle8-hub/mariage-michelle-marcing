@@ -9,3 +9,6 @@
 - [x] Mettre à jour le lieu principal avec « Mission protestante de Nlem » à Bandjoun.
 - [x] Rediriger directement l’invité vers son billet officiel après confirmation avec bouton de retour sur le site.
 - [x] Valider la compilation, les tests et nettoyer les données de test.
+- [x] Nouveau programme de la journée (13 h – mariage civil → 02 h – réjouissances) présenté sous forme de frise.
+- [x] Formulaire : choix « invité(e) de la mariée / du marié », suppression du champ e-mail.
+- [x] Espace mariés : colonne, filtre, statistiques et export CSV par côté (mariée / marié).

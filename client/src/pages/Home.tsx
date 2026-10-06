@@ -69,7 +69,7 @@ export default function Home() {
               <Bird className="w-12 h-12 md:w-16 md:h-16 fill-white stroke-white scale-x-[-1]" />
             </div>
             <p className="font-serif-luxury text-base md:text-xl italic font-semibold leading-relaxed max-w-xl drop-shadow-lg">
-              Rejoignez-nous pour célébrer<br className="hidden md:block" /> notre union traditionnelle !
+              Rejoignez-nous pour célébrer<br className="hidden md:block" /> notre mariage !
             </p>
             <p className="mt-8 text-sm md:text-lg font-semibold leading-relaxed max-w-xl drop-shadow-lg">
               Nous vous invitons à être à nos côtés pour<br className="hidden md:block" /> le début de ce nouveau chapitre, et à<br className="hidden md:block" /> partager avec nous chaque instant de cet<br className="hidden md:block" /> événement inoubliable !
