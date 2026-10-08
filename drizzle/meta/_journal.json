@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1790337635218,
-      "tag": "0000_dazzling_machine_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1790337984634,
-      "tag": "0001_rare_sway",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1791280381558,
-      "tag": "0002_thin_sabretooth",
+      "when": 1791474346107,
+      "tag": "0000_lumpy_clea",
       "breakpoints": true
     }
   ]

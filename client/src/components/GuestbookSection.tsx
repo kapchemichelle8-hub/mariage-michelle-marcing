@@ -1,44 +1,138 @@
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { trpc } from "@/lib/trpc";
-import { ChevronDown, ChevronUp, Heart, MessageSquareQuote } from "lucide-react";
-import { useState } from "react";
+import { sideLabel } from "@shared/rsvpConstants";
+import { FloralDivider } from "./Ornaments";
+import { Reveal } from "./Reveal";
+
+const FIRST_PAGE = 3;
+const NEXT_PAGE = 6;
+
+type Entry = { id: number; name: string; side: "mariee" | "marie"; message: string | null };
+
+/** Les mots apparaissent progressivement quand la carte devient visible. */
+function GuestbookCard({ entry, index }: { entry: Entry; index: number }) {
+  const ref = useRef<HTMLLIElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [open, setOpen] = useState(false);
+  const text = entry.message ?? "";
+  const long = text.length > 220;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return setVisible(true);
+    const observer = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const words = text.split(/\s+/).filter(Boolean);
+  return (
+    <li
+      ref={ref}
+      className={`reveal relative rounded-[1.4rem] border border-sand bg-white/85 p-5 shadow-[0_14px_34px_-28px_rgb(59_38_24/0.8)] sm:p-6 ${
+        visible ? "is-visible" : ""
+      } ${index % 3 === 1 ? "md:translate-y-5" : ""}`}
+    >
+      <span className="absolute -top-4 left-5 font-serif text-6xl leading-none text-gold/50" aria-hidden="true">
+        “
+      </span>
+      <p className={`whitespace-pre-line font-serif text-lg leading-relaxed text-ink ${long && !open ? "line-clamp-5" : ""}`}>
+        {visible ? (
+          <>
+            <span className="sr-only">{text}</span>
+            <span aria-hidden="true">
+              {words.map((w, i) => (
+                <span key={i} className="word-in" style={{ "--i": Math.min(i, 40) } as CSSProperties}>
+                  {w}{" "}
+                </span>
+              ))}
+            </span>
+          </>
+        ) : (
+          <span className="opacity-0">{text}</span>
+        )}
+      </p>
+      {long && (
+        <button type="button" onClick={() => setOpen((o) => !o)} className="mt-1 text-sm text-gold-deep underline underline-offset-4">
+          {open ? "Réduire" : "Lire la suite"}
+        </button>
+      )}
+      <p className="mt-3 text-sm font-medium text-cocoa">
+        — {entry.name}
+        <span className="ml-2 text-xs font-normal text-muted">{sideLabel(entry.side)}</span>
+      </p>
+    </li>
+  );
+}
 
 export function GuestbookSection() {
-  const { data: messages, isLoading } = trpc.wedding.getMessages.useQuery();
-  const [showAll, setShowAll] = useState(false);
+  const [extra, setExtra] = useState<Entry[]>([]);
+  const [hasMore, setHasMore] = useState<boolean | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const utils = trpc.useUtils();
+  const first = trpc.guestbook.list.useQuery({ offset: 0, limit: FIRST_PAGE }, { staleTime: 60_000 });
 
-  if (isLoading) {
-    return <section className="py-12 text-center text-muted-foreground text-xs">Chargement des vœux d'amour…</section>;
-  }
+  const entries = [...(first.data?.items ?? []), ...extra];
+  const more = hasMore ?? first.data?.hasMore ?? false;
 
-  if (!messages || messages.length === 0) return null;
-
-  const visibleMessages = showAll ? messages : messages.slice(0, 3);
+  const loadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const page = await utils.guestbook.list.fetch({ offset: entries.length, limit: NEXT_PAGE });
+      setExtra((prev) => [...prev, ...page.items.filter((p) => !entries.some((e) => e.id === p.id))]);
+      setHasMore(page.hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
-    <section className="py-16 px-4 bg-[#f8f3eb] border-y border-[#ebdcc8]/70">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-10">
-          <p className="font-script text-3xl md:text-4xl text-[#9d7537]">Mots doux & bénédictions</p>
-          <h2 className="font-serif-luxury text-2xl md:text-3xl font-bold tracking-wide text-[#2d241e] mt-1 mb-2">Le Livre d'Or des Mariés</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">Les tendres pensées partagées par nos familles et amis lors de leur confirmation.</p>
-        </div>
+    <section id="livre-dor" className="paper px-5 py-20 sm:py-24" aria-labelledby="guestbook-title">
+      <div className="mx-auto max-w-5xl">
+        <Reveal className="text-center">
+          <p className="eyebrow">Livre d’or</p>
+          <h2 id="guestbook-title" className="mt-2 text-4xl sm:text-5xl">
+            Vos mots doux
+          </h2>
+          <p className="mx-auto mt-3 max-w-lg font-serif text-lg italic text-muted">
+            Chaque bénédiction que vous nous laissez, nous la lisons et nous la gardons.
+          </p>
+        </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleMessages.map((item) => (
-            <div key={item.id} className="card-luxury p-5 rounded-2xl flex flex-col justify-between border-[#ebdcc8] hover:border-[#c69a58] transition-all">
-              <div><MessageSquareQuote className="w-5 h-5 text-[#c69a58] mb-2" /><p className="text-xs md:text-sm text-[#43352b] italic leading-relaxed mb-4">« {item.message} »</p></div>
-              <div className="pt-3 border-t border-[#ebdcc8]/50 flex items-center justify-between text-xs"><span className="font-semibold text-[#855f24] truncate">{item.name}</span><Heart className="w-3.5 h-3.5 text-[#c69a58] fill-[#c69a58]/40 shrink-0" /></div>
-            </div>
-          ))}
-        </div>
+        {first.isLoading && <p className="mt-10 text-center text-muted">Chargement des messages…</p>}
+        {first.isError && (
+          <p className="mt-10 text-center text-muted">Les messages ne peuvent pas s’afficher pour le moment.</p>
+        )}
+        {first.data && entries.length === 0 && (
+          <p className="mt-10 text-center font-serif text-xl italic text-muted">
+            Soyez le premier à nous écrire un mot, en confirmant votre réponse ci-dessous.
+          </p>
+        )}
 
-        {messages.length > 3 && (
-          <div className="text-center mt-8">
-            <button type="button" onClick={() => setShowAll((value) => !value)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#c69a58]/60 text-[#855f24] text-xs font-semibold hover:bg-white transition-colors cursor-pointer">
-              {showAll ? <><ChevronUp className="w-4 h-4" /> Voir moins</> : <><ChevronDown className="w-4 h-4" /> Voir plus de mots doux</>}
+        {entries.length > 0 && (
+          <ul className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+            {entries.map((e, i) => (
+              <GuestbookCard key={e.id} entry={e} index={i} />
+            ))}
+          </ul>
+        )}
+
+        {more && (
+          <div className="mt-12 text-center">
+            <button type="button" onClick={loadMore} disabled={loadingMore} className="btn-ghost">
+              {loadingMore ? "Chargement…" : "Voir plus"}
             </button>
           </div>
         )}
+        <FloralDivider className="mt-16" />
       </div>
     </section>
   );

@@ -1,138 +1,126 @@
-import { desc, eq, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import { InsertRsvp, InsertUser, rsvps, users } from "../drizzle/schema";
-import { ENV } from "./_core/env";
+import { and, desc, eq, isNotNull, ne } from "drizzle-orm";
+import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+import { rsvps, type NewRsvpRow, type RsvpRow } from "../drizzle/schema";
 
-let _db: ReturnType<typeof drizzle> | null = null;
-
-export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
-  }
-  return _db;
-}
+export type GuestbookEntry = Pick<RsvpRow, "id" | "name" | "side" | "message" | "createdAt">;
 
 /**
- * Ajoute la colonne `side` si la base n'a pas encore reçu la migration 0002,
- * pour que le formulaire fonctionne même si l'hébergeur n'applique pas les migrations.
+ * Accès aux réponses RSVP.
+ * Volontairement, il n'existe AUCUNE méthode de suppression globale :
+ * seule une ligne précise peut être supprimée, par son identifiant exact.
  */
-export async function ensureRsvpSideColumn() {
-  const db = await getDb();
-  if (!db) return;
-  try {
-    const [rows] = (await db.execute(
-      sql`SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'rsvps' AND COLUMN_NAME = 'side'`
-    )) as unknown as [Array<{ n: number | string }>];
-    if (Number(rows[0]?.n) === 0) {
-      await db.execute(sql`ALTER TABLE \`rsvps\` ADD \`side\` enum('bride','groom')`);
-      console.log("[Database] Colonne rsvps.side ajoutée");
-    }
-  } catch (error) {
-    console.warn("[Database] Vérification de la colonne rsvps.side impossible:", error);
+export interface RsvpStore {
+  insert(data: Omit<NewRsvpRow, "id" | "createdAt" | "updatedAt">): Promise<RsvpRow>;
+  findByTicketCode(code: string): Promise<RsvpRow | undefined>;
+  ticketCodeExists(code: string): Promise<boolean>;
+  listGuestbook(offset: number, limit: number): Promise<{ items: GuestbookEntry[]; hasMore: boolean }>;
+  listAll(): Promise<RsvpRow[]>;
+  deleteById(id: number): Promise<boolean>;
+}
+
+export class MysqlRsvpStore implements RsvpStore {
+  constructor(private db: MySql2Database) {}
+
+  async insert(data: Omit<NewRsvpRow, "id" | "createdAt" | "updatedAt">) {
+    const [result] = await this.db.insert(rsvps).values(data).$returningId();
+    const [row] = await this.db.select().from(rsvps).where(eq(rsvps.id, result.id)).limit(1);
+    return row;
+  }
+
+  async findByTicketCode(code: string) {
+    const [row] = await this.db.select().from(rsvps).where(eq(rsvps.ticketCode, code)).limit(1);
+    return row;
+  }
+
+  async ticketCodeExists(code: string) {
+    return Boolean(await this.findByTicketCode(code));
+  }
+
+  async listGuestbook(offset: number, limit: number) {
+    const rows = await this.db
+      .select({
+        id: rsvps.id,
+        name: rsvps.name,
+        side: rsvps.side,
+        message: rsvps.message,
+        createdAt: rsvps.createdAt,
+      })
+      .from(rsvps)
+      .where(and(isNotNull(rsvps.message), ne(rsvps.message, "")))
+      .orderBy(desc(rsvps.createdAt), desc(rsvps.id))
+      .limit(limit + 1)
+      .offset(offset);
+    return { items: rows.slice(0, limit), hasMore: rows.length > limit };
+  }
+
+  async listAll() {
+    return this.db.select().from(rsvps).orderBy(desc(rsvps.createdAt), desc(rsvps.id));
+  }
+
+  async deleteById(id: number) {
+    const [result] = await this.db.delete(rsvps).where(eq(rsvps.id, id));
+    return result.affectedRows === 1;
   }
 }
 
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) throw new Error("User openId is required for upsert");
-  const db = await getDb();
-  if (!db) return;
+/** Implémentation en mémoire, utilisée par les tests : elle ne touche jamais la vraie base. */
+export class MemoryRsvpStore implements RsvpStore {
+  rows: RsvpRow[] = [];
+  private nextId = 1;
+  private clock = Date.now();
 
-  const values: InsertUser = { openId: user.openId };
-  const updateSet: Record<string, unknown> = {};
-  const textFields = ["name", "email", "loginMethod"] as const;
-  type TextField = (typeof textFields)[number];
-  const assignNullable = (field: TextField) => {
-    const value = user[field];
-    if (value === undefined) return;
-    values[field] = value ?? null;
-    updateSet[field] = value ?? null;
-  };
-  textFields.forEach(assignNullable);
-  if (user.lastSignedIn !== undefined) {
-    values.lastSignedIn = user.lastSignedIn;
-    updateSet.lastSignedIn = user.lastSignedIn;
+  async insert(data: Omit<NewRsvpRow, "id" | "createdAt" | "updatedAt">) {
+    // Horloge strictement croissante pour un ordre stable dans les tests.
+    const now = new Date((this.clock += 1000));
+    const row: RsvpRow = {
+      id: this.nextId++,
+      name: data.name,
+      email: data.email ?? null,
+      attendance: data.attendance,
+      side: data.side,
+      guestsCount: data.guestsCount ?? 0,
+      message: data.message ?? null,
+      ticketCode: data.ticketCode ?? null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.rows.push(row);
+    return { ...row };
   }
-  if (user.role !== undefined) {
-    values.role = user.role;
-    updateSet.role = user.role;
-  } else if (user.openId === ENV.ownerOpenId) {
-    values.role = "admin";
-    updateSet.role = "admin";
+
+  async findByTicketCode(code: string) {
+    return this.rows.find((r) => r.ticketCode === code);
   }
-  values.lastSignedIn ??= new Date();
-  if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+
+  async ticketCodeExists(code: string) {
+    return this.rows.some((r) => r.ticketCode === code);
+  }
+
+  async listGuestbook(offset: number, limit: number) {
+    const all = (await this.listAll())
+      .filter((r) => r.message && r.message.trim() !== "")
+      .map(({ id, name, side, message, createdAt }) => ({ id, name, side, message, createdAt }));
+    return { items: all.slice(offset, offset + limit), hasMore: all.length > offset + limit };
+  }
+
+  async listAll() {
+    return [...this.rows].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id - a.id
+    );
+  }
+
+  async deleteById(id: number) {
+    const index = this.rows.findIndex((r) => r.id === id);
+    if (index === -1) return false;
+    this.rows.splice(index, 1);
+    return true;
+  }
 }
 
-export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return result[0];
-}
+let pool: mysql.Pool | undefined;
 
-export async function createRsvp(data: InsertRsvp) {
-  const db = await getDb();
-  if (!db) throw new Error("Base de données indisponible");
-  await db.insert(rsvps).values(data);
-  const rows = await db.select().from(rsvps).where(eq(rsvps.ticketCode, data.ticketCode)).limit(1);
-  return rows[0];
-}
-
-export async function getRsvpByTicketCode(ticketCode: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const rows = await db.select().from(rsvps).where(eq(rsvps.ticketCode, ticketCode)).limit(1);
-  return rows[0];
-}
-
-export async function getAllRsvps() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(rsvps).orderBy(desc(rsvps.createdAt));
-}
-
-export async function deleteRsvp(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Base de données indisponible");
-  await db.delete(rsvps).where(eq(rsvps.id, id));
-}
-
-export async function deleteGuestbookMessage(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Base de données indisponible");
-  await db.update(rsvps).set({ message: null }).where(eq(rsvps.id, id));
-}
-
-export async function getPublicWeddingStats() {
-  const db = await getDb();
-  if (!db) return { attendingResponses: 0, totalGuests: 0, declinedResponses: 0, totalResponses: 0, brideGuests: 0, groomGuests: 0 };
-  const rows = await db.select().from(rsvps);
-  const attending = rows.filter((r) => r.attendance === "yes");
-  const declined = rows.filter((r) => r.attendance === "no");
-  const countGuests = (list: typeof rows) => list.reduce((acc, curr) => acc + (curr.guestsCount || 1), 0);
-  return {
-    attendingResponses: attending.length,
-    totalGuests: countGuests(attending),
-    brideGuests: countGuests(attending.filter((r) => r.side === "bride")),
-    groomGuests: countGuests(attending.filter((r) => r.side === "groom")),
-    declinedResponses: declined.length,
-    totalResponses: rows.length,
-  };
-}
-
-export async function getApprovedMessages() {
-  const db = await getDb();
-  if (!db) return [];
-  return db
-    .select({ id: rsvps.id, name: rsvps.name, message: rsvps.message, createdAt: rsvps.createdAt })
-    .from(rsvps)
-    .where(sql`${rsvps.message} IS NOT NULL AND ${rsvps.message} != ''`)
-    .orderBy(desc(rsvps.createdAt))
-    .limit(20);
+export function createMysqlStore(databaseUrl: string): RsvpStore {
+  pool ??= mysql.createPool({ uri: databaseUrl, connectionLimit: 5, timezone: "Z" });
+  return new MysqlRsvpStore(drizzle(pool));
 }

@@ -1,41 +1,70 @@
-import { Copy, Gift, Heart, Phone } from "lucide-react";
-import { toast } from "sonner";
-import { WEDDING_CONFIG } from "../weddingConfig";
+import { useState } from "react";
+import { gifts, media } from "@/weddingConfig";
+import { Reveal } from "./Reveal";
+
+function CopyNumber({ number }: { number: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(number.replace(/\s/g, ""));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* copie impossible : le numéro reste lisible à l'écran */
+    }
+  };
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-sand bg-white/80 px-4 py-3">
+      <a href={`tel:${number.replace(/\s/g, "")}`} className="font-serif text-2xl tracking-wider text-cocoa">
+        {number}
+      </a>
+      <button
+        type="button"
+        onClick={copy}
+        className="rounded-full border border-gold/60 px-3 py-1 text-xs text-gold-deep transition-colors hover:bg-cream"
+        aria-label={`Copier le numéro ${number}`}
+      >
+        <span aria-live="polite">{copied ? "Copié ✓" : "Copier"}</span>
+      </button>
+    </div>
+  );
+}
 
 export function GiftsSection() {
-  const copyNumber = async (number: string) => {
-    await navigator.clipboard.writeText(number);
-    toast.success(`Numéro ${number} copié`);
-  };
-
   return (
-    <section className="py-20 px-4 bg-[#f4ede1] border-y border-[#ebdcc8]/70">
-      <div className="max-w-3xl mx-auto text-center">
-        <div className="gift-ornament flex items-center justify-center gap-2 text-[#9d7537] mb-5" aria-hidden="true">
-          <span>✦</span><span>✦</span><span>✦</span><span>✦</span><span>✦</span>
-        </div>
-        <p className="font-script text-4xl text-[#9d7537]">{WEDDING_CONFIG.gifts.title}</p>
-        <h2 className="font-serif-luxury text-2xl md:text-3xl font-bold text-[#2d241e] mt-2 mb-5">Votre affection est notre plus beau cadeau</h2>
-        <p className="text-sm md:text-base text-[#6f5c4c] leading-relaxed max-w-2xl mx-auto">
-          {WEDDING_CONFIG.gifts.intro}
-        </p>
-
-        <div className="card-luxury mt-8 rounded-3xl p-6 md:p-8 text-left max-w-xl mx-auto">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-full bg-[#f8eedd] flex items-center justify-center"><Gift className="w-6 h-6 text-[#9d7537]" /></div>
-            <div><p className="text-xs uppercase tracking-widest text-[#9d7537] font-semibold">Contribution mobile</p><p className="font-serif-luxury text-lg font-bold text-[#2d241e]">{WEDDING_CONFIG.gifts.recipient}</p></div>
-          </div>
-          <div className="space-y-3">
-            {WEDDING_CONFIG.gifts.numbers.map((number) => (
-              <div key={number} className="flex items-center justify-between gap-3 rounded-2xl bg-[#faf7f2] border border-[#ebdcc8] px-4 py-3">
-                <a href={`tel:${number}`} className="flex items-center gap-2 font-serif-luxury text-lg font-bold tracking-wider text-[#855f24] hover:underline"><Phone className="w-4 h-4" />{number}</a>
-                <button type="button" onClick={() => copyNumber(number)} className="p-2 rounded-full text-[#9d7537] hover:bg-[#f4ede1] transition-colors cursor-pointer" aria-label={`Copier le numéro ${number}`}><Copy className="w-4 h-4" /></button>
-              </div>
+    <section id="cadeaux" className="bg-cream/60 px-5 py-20 sm:py-24" aria-labelledby="gifts-title">
+      <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[0.8fr_1.2fr]">
+        <Reveal className="order-2 md:order-1">
+          <img
+            src={media.table}
+            width={720}
+            height={1079}
+            loading="lazy"
+            decoding="async"
+            alt="Table de fête dressée avec une assiette dorée, un menu calligraphié et des roses"
+            className="depth mx-auto aspect-[4/5] w-full max-w-xs rounded-t-[999px] rounded-b-[1.6rem] object-cover shadow-[0_24px_50px_-30px_rgb(59_38_24/0.8)] md:max-w-none"
+          />
+        </Reveal>
+        <Reveal delay={100} className="order-1 text-center md:order-2 md:text-left">
+          <p className="eyebrow">Dons &amp; cadeaux</p>
+          <h2 id="gifts-title" className="mt-2 text-4xl sm:text-5xl">
+            Votre présence est déjà un cadeau
+          </h2>
+          <p className="mt-4 text-lg leading-relaxed text-ink/90">
+            Vraiment. Venir jusqu’à Bandjoun, prier pour nous, nous envoyer un mot : c’est ce qui
+            compte le plus. Si toutefois vous souhaitez nous accompagner autrement, une contribution
+            volontaire sera reçue avec beaucoup de gratitude.
+          </p>
+          <div className="mt-7 space-y-3 text-left">
+            <p className="text-sm text-muted">
+              Au nom de <strong className="font-medium text-cocoa">{gifts.beneficiary}</strong>
+            </p>
+            {gifts.numbers.map((n) => (
+              <CopyNumber key={n} number={n} />
             ))}
           </div>
-        </div>
-
-        <p className="font-script text-2xl text-[#9d7537] mt-8 flex items-center justify-center gap-2"><Heart className="w-4 h-4 fill-[#c69a58]" /> {WEDDING_CONFIG.gifts.closing} <Heart className="w-4 h-4 fill-[#c69a58]" /></p>
+          <p className="script mt-6 text-3xl text-gold-deep">Merci du fond du cœur</p>
+        </Reveal>
       </div>
     </section>
   );

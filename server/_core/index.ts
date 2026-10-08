@@ -2,12 +2,11 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
-import { registerStorageProxy } from "./storageProxy";
+import { createMysqlStore } from "../db";
+import { env } from "../env";
 import { appRouter } from "../routers";
-import { ensureRsvpSideColumn } from "../db";
-import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -30,26 +29,42 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
-  await ensureRsvpSideColumn();
+  if (!env.databaseUrl) throw new Error("DATABASE_URL est requis.");
+  if (!env.adminPassword || !env.sessionSecret) {
+    console.warn("[mariage] ADMIN_PASSWORD ou JWT_SECRET manquant : l'Espace Mariés restera fermé.");
+  }
+
+  const store = createMysqlStore(env.databaseUrl);
   const app = express();
   const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  registerStorageProxy(app);
-  registerOAuthRoutes(app);
+  app.set("trust proxy", 1);
+  app.disable("x-powered-by");
+  app.use(express.json({ limit: "64kb" }));
+
   // tRPC API
   app.use(
     "/api/trpc",
     createExpressMiddleware({
       router: appRouter,
-      createContext,
+      createContext: ({ req }) => ({
+        store,
+        ip: req.ip ?? "inconnu",
+        adminToken: req.header("x-admin-token") ?? undefined,
+        adminPassword: env.adminPassword,
+        sessionSecret: env.sessionSecret,
+      }),
     })
   );
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
+    // Cache long pour les médias, polices et fichiers versionnés.
+    const publicDir = path.resolve(import.meta.dirname, "public");
+    for (const dir of ["media", "fonts", "assets"]) {
+      app.use(`/${dir}`, express.static(path.join(publicDir, dir), { maxAge: "30d" }));
+    }
     serveStatic(app);
   }
 

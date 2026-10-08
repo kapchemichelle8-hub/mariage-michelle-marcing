@@ -1,106 +1,66 @@
-import { CheckCircle2, Download, FileDown, Heart, ImageDown, MapPin, QrCode, Share2 } from "lucide-react";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
-import { WEDDING_CONFIG } from "../weddingConfig";
+import { forwardRef } from "react";
+import { sideLabel } from "@shared/rsvpConstants";
+import { schedule, wedding } from "@/weddingConfig";
+import { DovesHeart } from "./Ornaments";
 
-export interface TicketData {
-  ticketCode: string;
+export type TicketData = {
   name: string;
+  side: "mariee" | "marie";
   guestsCount: number;
-  attendance: "yes" | "no";
-  side?: "bride" | "groom" | null;
-  createdAt?: Date | string;
-}
+  ticketCode: string;
+};
 
-export function DigitalTicket({ ticket }: { ticket: TicketData }) {
-  const ticketRef = useRef<HTMLDivElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
+/** Le billet est dessiné avec des styles simples pour s'exporter fidèlement en PNG et en PDF. */
+export const DigitalTicket = forwardRef<HTMLDivElement, { ticket: TicketData }>(({ ticket }, ref) => (
+  <div
+    ref={ref}
+    className="print-ticket relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[1.8rem] bg-ivory text-ink shadow-[0_30px_60px_-30px_rgb(59_38_24/0.8)]"
+  >
+    <div className="relative bg-cocoa px-6 pb-8 pt-7 text-center text-ivory">
+      <DovesHeart className="mx-auto h-8 w-28 text-gold-soft" />
+      <p className="mt-3 text-[0.65rem] uppercase tracking-[0.35em] text-gold-soft">Billet d’invitation</p>
+      <p className="script mt-1 text-5xl leading-tight">Michelle &amp; Marcing</p>
+      <p className="mt-1 font-serif text-lg tracking-[0.18em] text-gold-soft">{wedding.shortDate}</p>
+      <p className="text-xs uppercase tracking-[0.25em] text-ivory/80">
+        {wedding.city} · {wedding.country}
+      </p>
+    </div>
 
-  const makePng = async () => {
-    if (!ticketRef.current) throw new Error("Billet indisponible");
-    const { toPng } = await import("html-to-image");
-    return toPng(ticketRef.current, { cacheBust: true, pixelRatio: 2, backgroundColor: "#ffffff" });
-  };
+    {/* Découpe façon billet */}
+    <div className="relative h-0">
+      <span className="absolute -left-4 -top-4 h-8 w-8 rounded-full bg-cream" />
+      <span className="absolute -right-4 -top-4 h-8 w-8 rounded-full bg-cream" />
+    </div>
 
-  const downloadFile = (href: string, filename: string) => {
-    const link = document.createElement("a");
-    link.href = href;
-    link.download = filename;
-    link.click();
-  };
+    <div className="px-6 pb-6 pt-7">
+      <p className="text-center font-serif text-lg italic text-muted">Avec toute notre joie, nous accueillons</p>
+      <p className="mt-1 text-center font-serif text-3xl font-medium leading-tight text-cocoa">{ticket.name}</p>
+      <p className="mt-1 text-center text-sm text-muted">
+        {ticket.guestsCount} {ticket.guestsCount > 1 ? "personnes" : "personne"} · {sideLabel(ticket.side)}
+      </p>
 
-  const handleDownloadPng = async () => {
-    try {
-      setIsExporting(true);
-      const dataUrl = await makePng();
-      downloadFile(dataUrl, `billet-michelle-marcing-${ticket.ticketCode}.png`);
-      toast.success("Votre billet PNG est prêt à être enregistré dans votre galerie.");
-    } catch {
-      toast.error("Impossible de créer l'image du billet. Réessayez dans un instant.");
-    } finally {
-      setIsExporting(false);
-    }
-  };
+      <ul className="mt-6 space-y-3 border-y border-dashed border-gold/50 py-5">
+        {schedule.map((s) => (
+          <li key={s.time} className="flex gap-3">
+            <span className="w-16 shrink-0 font-serif text-lg font-semibold text-gold-deep">{s.time}</span>
+            <span className="text-sm leading-snug">
+              <span className="block font-medium text-cocoa">{s.title}</span>
+              <span className="text-muted">{s.place}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
 
-  const handleDownloadPdf = async () => {
-    try {
-      setIsExporting(true);
-      const dataUrl = await makePng();
-      const { PDFDocument } = await import("pdf-lib");
-      const pdf = await PDFDocument.create();
-      const image = await pdf.embedPng(dataUrl);
-      const page = pdf.addPage([image.width, image.height]);
-      page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
-      const bytes = await pdf.save();
-      const blobUrl = URL.createObjectURL(new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" }));
-      downloadFile(blobUrl, `billet-michelle-marcing-${ticket.ticketCode}.pdf`);
-      URL.revokeObjectURL(blobUrl);
-      toast.success("Votre billet PDF est prêt.");
-    } catch {
-      toast.error("Impossible de créer le PDF du billet. Réessayez dans un instant.");
-    } finally {
-      setIsExporting(false);
-    }
-  };
+      <p className="mt-4 text-xs leading-relaxed text-muted">{wedding.itinerary}</p>
 
-  const handlePrint = () => window.print();
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}/billet/${ticket.ticketCode}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "Billet d'invitation — Michelle & Marcing", text: `Billet officiel de ${ticket.name}`, url });
-      } catch {
-        // L'utilisateur peut fermer la fenêtre de partage sans erreur.
-      }
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast.success("Lien de votre billet copié dans le presse-papier !");
-    }
-  };
-
-  return (
-    <div className="ticket-print-area w-full max-w-xl mx-auto my-6 print:m-0 print:max-w-none">
-      <div ref={ticketRef} className="relative bg-white text-[#2d241e] rounded-3xl p-6 md:p-8 border-2 border-[#c69a58]/40 shadow-2xl overflow-hidden print:border print:shadow-none print:rounded-none">
-        <div className="absolute top-0 left-0 right-0 h-3 gold-gradient" />
-        <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#c69a58]/10 rounded-full blur-2xl pointer-events-none print:hidden" />
-        <div className="text-center pb-6 border-b border-dashed border-[#c69a58]/40"><span className="font-script text-3xl text-[#9d7537]">Michelle & Marcing</span><h3 className="font-serif-luxury text-lg md:text-xl font-bold tracking-wider uppercase text-[#2d241e] mt-1">Billet d'Accès Officiel</h3><p className="text-xs uppercase tracking-widest text-[#9d7537] font-semibold mt-1">{WEDDING_CONFIG.title}</p></div>
-        <div className="py-6 space-y-5">
-          <div className="bg-[#fcfaf7] border border-[#ebdcc8] rounded-2xl p-4 text-center"><span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">{ticket.side === "bride" ? `Invité(e) de la mariée · ${WEDDING_CONFIG.bride}` : ticket.side === "groom" ? `Invité(e) du marié · ${WEDDING_CONFIG.groom}` : "Invité(e) d'honneur"}</span><p className="font-serif-luxury text-xl md:text-2xl font-bold text-[#855f24]">{ticket.name}</p><div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-[#c69a58]/15 rounded-full text-xs font-semibold text-[#855f24]"><CheckCircle2 className="w-3.5 h-3.5" /><span>Présence confirmée pour {ticket.guestsCount} {ticket.guestsCount > 1 ? "personnes" : "personne"}</span></div></div>
-          <div className="grid grid-cols-2 gap-4 text-xs md:text-sm"><div className="p-3 bg-[#faf7f2] rounded-xl border border-[#ebdcc8]/60"><span className="text-muted-foreground block text-[11px] uppercase tracking-wider">Date</span><strong className="text-[#2d241e] font-semibold block mt-0.5">{WEDDING_CONFIG.dateString}</strong><span className="text-muted-foreground text-[11px]">Dès {WEDDING_CONFIG.schedule[0].start}</span></div><div className="p-3 bg-[#faf7f2] rounded-xl border border-[#ebdcc8]/60"><span className="text-muted-foreground block text-[11px] uppercase tracking-wider">Lieu</span><strong className="text-[#2d241e] font-semibold block mt-0.5">Mairie de Pète-Bandjoun</strong><span className="text-muted-foreground text-[11px]">Puis vin d'honneur à Mboa et soirée à Nlem</span></div></div>
-          <div className="flex gap-2 items-start p-4 rounded-xl bg-gradient-to-r from-[#fbf8f3] via-[#f7f0e3] to-[#fbf8f3] border border-[#c69a58]/30"><MapPin className="w-4 h-4 mt-0.5 text-[#9d7537] shrink-0" /><p className="text-xs text-[#5a4632] leading-relaxed">Pour la messe et la soirée à Nlem : depuis le Centre climatique de Bandjoun, prenez la moto et dites : « Mission protestante de Nlem ».</p></div>
-          <div className="p-4 rounded-xl bg-gradient-to-r from-[#fbf8f3] via-[#f7f0e3] to-[#fbf8f3] border border-[#c69a58]/30 text-center"><Heart className="w-5 h-5 mx-auto text-[#9d7537] mb-1.5 fill-[#c69a58]/30" /><p className="font-serif-luxury text-sm md:text-base font-semibold text-[#855f24]">« Nous sommes infiniment heureux de vous compter parmi nous ! »</p><p className="text-xs text-muted-foreground mt-1">Votre présence apportera une grâce toute particulière à notre grand jour.</p></div>
-          <div className="flex items-center justify-between pt-2 border-t border-dashed border-[#c69a58]/40"><div><span className="text-[10px] uppercase tracking-wider text-muted-foreground block">N° d'invitation unique</span><span className="font-mono text-base font-bold text-[#2d241e] tracking-wider">{ticket.ticketCode}</span></div><div className="w-16 h-16 rounded-xl border-2 border-[#c69a58]/40 flex flex-col items-center justify-center bg-[#faf7f2] p-1"><QrCode className="w-10 h-10 text-[#855f24]" /><span className="text-[8px] font-mono text-muted-foreground">VALIDÉ</span></div></div>
+      <div className="mt-5 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-[0.6rem] uppercase tracking-[0.3em] text-muted">Code personnel</p>
+          <p className="font-mono text-2xl font-semibold tracking-[0.12em] text-cocoa">{ticket.ticketCode}</p>
         </div>
-        <div className="hidden md:block absolute left-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#faf7f2] border-r-2 border-[#c69a58]/40 print:hidden" /><div className="hidden md:block absolute right-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#faf7f2] border-l-2 border-[#c69a58]/40 print:hidden" />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-3 justify-center print:hidden">
-        <button type="button" onClick={handleDownloadPng} disabled={isExporting} className="px-4 py-2.5 rounded-full gold-gradient text-white font-medium text-xs shadow-md hover:brightness-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"><ImageDown className="w-4 h-4" /> Télécharger en PNG</button>
-        <button type="button" onClick={handleDownloadPdf} disabled={isExporting} className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"><FileDown className="w-4 h-4" /> Télécharger en PDF</button>
-        <button type="button" onClick={handlePrint} disabled={isExporting} className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"><Download className="w-4 h-4" /> Imprimer uniquement le billet</button>
-        <button type="button" onClick={handleShare} className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer"><Share2 className="w-4 h-4" /> Partager mon invitation</button>
+        <p className="script text-right text-2xl leading-tight text-gold-deep">Bienvenue&nbsp;!</p>
       </div>
     </div>
-  );
-}
+  </div>
+));
+DigitalTicket.displayName = "DigitalTicket";
