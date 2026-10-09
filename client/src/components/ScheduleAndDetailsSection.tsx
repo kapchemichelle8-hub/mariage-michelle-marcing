@@ -22,15 +22,15 @@ function Step({ step, index }: { step: ScheduleStep; index: number }) {
       className={`step-card reveal relative pl-12 ${offsets[index]} md:pl-16`}
       style={{ "--delay": `${index * 120}ms` } as React.CSSProperties}
     >
-      <span className="step-dot absolute left-[0.55rem] top-7 grid h-7 w-7 place-items-center rounded-full border border-gold bg-ivory text-gold-deep md:left-[1.05rem]">
+      <span className="step-dot absolute left-[0.4rem] top-7 grid h-8 w-8 place-items-center rounded-full bg-cocoa text-gold-soft ring-2 ring-gold md:left-[0.9rem]">
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           {ICONS[index]}
         </svg>
       </span>
       <article
-        className={`rounded-[1.6rem] border border-sand bg-white/80 p-6 shadow-[0_18px_40px_-30px_rgb(59_38_24/0.7)] transition-transform duration-300 hover:-translate-y-1 sm:p-7 ${tilts[index]}`}
+        className={`rounded-[1.6rem] border border-gold/45 bg-white p-6 shadow-[0_24px_48px_-28px_rgb(28_20_16/0.55)] transition-transform duration-300 hover:-translate-y-1 sm:p-7 ${tilts[index]}`}
       >
-        <p className="script text-4xl leading-none text-gold-deep sm:text-5xl">{step.time}</p>
+        <p className="font-display text-3xl font-semibold leading-none text-gold-deep sm:text-4xl">{step.time}</p>
         <h3 className="mt-3 text-2xl sm:text-[1.7rem]">{step.title}</h3>
         <p className="mt-1 flex items-start gap-1.5 text-sm font-medium text-muted">
           <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0 text-gold" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
@@ -39,7 +39,7 @@ function Step({ step, index }: { step: ScheduleStep; index: number }) {
           </svg>
           {step.place}
         </p>
-        <p className="mt-3 leading-relaxed text-ink/90">{step.text}</p>
+        <p className="mt-3 leading-relaxed text-ink">{step.text}</p>
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(step.mapQuery)}`}
           target="_blank"
@@ -62,7 +62,7 @@ export function ScheduleAndDetailsSection() {
           <h2 id="when-title" className="mt-2 text-4xl sm:text-5xl">
             {wedding.dateLabel}
           </h2>
-          <p className="mx-auto mt-4 max-w-xl font-serif text-xl italic leading-snug text-muted">
+          <p className="mx-auto mt-4 max-w-xl font-display text-xl italic leading-snug text-ink">
             Nous serions profondément heureux de vous avoir à nos côtés pour ces trois moments qui
             comptent tant pour nous.
           </p>
@@ -90,14 +90,14 @@ export function ScheduleAndDetailsSection() {
                   alt="Longues tables en bois éclairées de bougies et de guirlandes lumineuses, prêtes pour la soirée"
                   className="aspect-[3/2] w-full object-cover"
                 />
-                <figcaption className="bg-cocoa px-5 py-3 text-center font-serif text-lg italic text-gold-soft">
+                <figcaption className="bg-cocoa px-5 py-3 text-center font-display text-lg italic text-gold-soft">
                   Et le soir venu, la fête en famille
                 </figcaption>
               </figure>
             </Reveal>
-            <Reveal delay={100} className="rounded-[1.6rem] border border-gold/40 bg-cream/70 p-6">
+            <Reveal delay={100} className="rounded-[1.6rem] border border-gold/50 bg-cream p-6">
               <p className="eyebrow">Pour venir à Nlem</p>
-              <p className="mt-3 font-serif text-lg leading-snug text-cocoa">{wedding.itinerary}</p>
+              <p className="mt-3 font-serif text-xl leading-snug text-ink">{wedding.itinerary}</p>
               <p className="mt-4 text-sm text-muted">
                 Bandjoun, région de l’Ouest, Cameroun. Prévoyez un petit lainage : les soirées de
                 décembre sont fraîches sur les hauts plateaux.

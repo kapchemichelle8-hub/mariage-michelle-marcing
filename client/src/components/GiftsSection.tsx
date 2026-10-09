@@ -14,14 +14,14 @@ function CopyNumber({ number }: { number: string }) {
     }
   };
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-sand bg-white/80 px-4 py-3">
-      <a href={`tel:${number.replace(/\s/g, "")}`} className="font-serif text-2xl tracking-wider text-cocoa">
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-gold/50 bg-white px-4 py-3 shadow-sm">
+      <a href={`tel:${number.replace(/\s/g, "")}`} className="font-display text-2xl font-medium tracking-wider text-ink">
         {number}
       </a>
       <button
         type="button"
         onClick={copy}
-        className="rounded-full border border-gold/60 px-3 py-1 text-xs text-gold-deep transition-colors hover:bg-cream"
+        className="min-h-[44px] min-w-[72px] rounded-full border-[1.5px] border-gold px-3 text-sm font-medium text-gold-deep transition-colors hover:bg-cream"
         aria-label={`Copier le numéro ${number}`}
       >
         <span aria-live="polite">{copied ? "Copié ✓" : "Copier"}</span>
@@ -32,7 +32,7 @@ function CopyNumber({ number }: { number: string }) {
 
 export function GiftsSection() {
   return (
-    <section id="cadeaux" className="bg-cream/60 px-5 py-20 sm:py-24" aria-labelledby="gifts-title">
+    <section id="cadeaux" className="bg-cream px-5 py-20 sm:py-28" aria-labelledby="gifts-title">
       <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[0.8fr_1.2fr]">
         <Reveal className="order-2 md:order-1">
           <img
@@ -50,7 +50,7 @@ export function GiftsSection() {
           <h2 id="gifts-title" className="mt-2 text-4xl sm:text-5xl">
             Votre présence est déjà un cadeau
           </h2>
-          <p className="mt-4 text-lg leading-relaxed text-ink/90">
+          <p className="mt-4 text-lg leading-relaxed text-ink">
             Vraiment. Venir jusqu’à Bandjoun, prier pour nous, nous envoyer un mot : c’est ce qui
             compte le plus. Si toutefois vous souhaitez nous accompagner autrement, une contribution
             volontaire sera reçue avec beaucoup de gratitude.

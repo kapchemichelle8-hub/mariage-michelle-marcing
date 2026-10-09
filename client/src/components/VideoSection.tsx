@@ -6,20 +6,20 @@ import { Reveal } from "./Reveal";
 export function VideoSection() {
   const [playing, setPlaying] = useState(false);
   return (
-    <section className="bg-cocoa px-5 py-20 text-ivory sm:py-24" aria-labelledby="video-title">
+    <section className="night px-5 py-20 sm:py-28" aria-labelledby="video-title">
       <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
         <Reveal className="text-center md:text-left">
           <p className="eyebrow !text-gold-soft">Nos moments</p>
           <h2 id="video-title" className="mt-2 text-4xl !text-ivory sm:text-5xl">
             Quelques souvenirs avant le grand jour
           </h2>
-          <p className="mt-4 font-serif text-xl italic text-ivory/80">
+          <p className="mt-4 font-display text-xl italic text-ivory/90">
             Des sourires, des selfies, des bagues… et beaucoup d’amour. Merci de faire partie de notre
             histoire.
           </p>
         </Reveal>
         <Reveal delay={120} className="mx-auto w-full max-w-[300px]">
-          <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] bg-black shadow-[0_30px_60px_-20px_rgb(0_0_0/0.7)] ring-1 ring-gold/40">
+          <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] bg-black shadow-[0_30px_60px_-20px_rgb(0_0_0/0.7)] ring-2 ring-gold">
             {playing ? (
               <video
                 src={media.video}

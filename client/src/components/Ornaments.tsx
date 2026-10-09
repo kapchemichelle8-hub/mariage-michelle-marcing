@@ -1,8 +1,5 @@
 import type { CSSProperties } from "react";
 
-const HEART_PATH =
-  "M0.5,0.94 C0.22,0.76 0.02,0.56 0.02,0.32 C0.02,0.15 0.15,0.03 0.3,0.03 C0.39,0.03 0.46,0.08 0.5,0.16 C0.54,0.08 0.61,0.03 0.7,0.03 C0.85,0.03 0.98,0.15 0.98,0.32 C0.98,0.56 0.78,0.76 0.5,0.94 Z";
-
 const DOVE_PATH =
   "M2 30c6-1 11-4 15-8 3-3 6-5 10-5 2 0 4 1 5 3 1-6 5-12 12-16 4-2 8-3 12-3-5 3-8 7-9 12 4-3 9-4 14-3-4 2-7 5-9 9 3 0 6 1 8 3-6 0-10 2-13 5-4 5-10 8-17 8-6 0-11-2-15-5-4 1-9 1-13 0z";
 
@@ -43,46 +40,31 @@ export function FloralDivider({ className = "" }: { className?: string }) {
   );
 }
 
-/** Définition partagée du masque en cœur (à monter une seule fois). */
-export function HeartClipDefs() {
-  return (
-    <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
-      <defs>
-        <clipPath id="heart-clip" clipPathUnits="objectBoundingBox">
-          <path d={HEART_PATH} />
-        </clipPath>
-      </defs>
-    </svg>
-  );
-}
-
-type HeartPortraitProps = {
+type PortraitProps = {
   src: string;
   alt: string;
   className?: string;
   loading?: "lazy" | "eager";
 };
 
-/** Portrait découpé en cœur, avec un liseré or. */
-export function HeartPortrait({ src, alt, className = "", loading = "lazy" }: HeartPortraitProps) {
+/**
+ * Portrait en médaillon rond : anneau or, liseré ivoire, visage centré.
+ * Les photos sont recadrées en amont (visage au centre, épaules visibles).
+ */
+export function Portrait({ src, alt, className = "", loading = "lazy" }: PortraitProps) {
   return (
-    <figure className={`depth relative aspect-square ${className}`} tabIndex={0}>
-      <div className="absolute inset-0 translate-y-1 scale-[1.06]" style={{ clipPath: "url(#heart-clip)" }}>
-        <div className="h-full w-full bg-gradient-to-br from-gold-soft via-gold to-gold-deep" />
+    <figure className={`depth gold-ring aspect-square ${className}`} tabIndex={0}>
+      <div className="ring-inner h-full w-full">
+        <img
+          src={src}
+          alt={alt}
+          width={640}
+          height={640}
+          loading={loading}
+          decoding="async"
+          className="h-full w-full rounded-full object-cover object-center"
+        />
       </div>
-      <img
-        src={src}
-        alt={alt}
-        width={520}
-        height={520}
-        loading={loading}
-        decoding="async"
-        className="relative h-full w-full object-cover"
-        style={{ clipPath: "url(#heart-clip)" }}
-      />
-      <svg viewBox="0 0 1 1" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-        <path d={HEART_PATH} fill="none" stroke="#fffaf0" strokeWidth="2" vectorEffect="non-scaling-stroke" opacity="0.9" />
-      </svg>
     </figure>
   );
 }

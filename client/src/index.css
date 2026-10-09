@@ -30,17 +30,35 @@
   src: url("/fonts/jost.woff2") format("woff2");
 }
 
-@theme {
-  --color-ivory: #fbf7f0;
-  --color-cream: #f3eadb;
-  --color-sand: #e7d8bf;
-  --color-gold: #c6a15b;
-  --color-gold-deep: #9c7a3c;
-  --color-gold-soft: #e3cf9f;
-  --color-cocoa: #3b2618;
-  --color-ink: #4a3326;
-  --color-muted: #7a6150;
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/playfair-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Playfair Display";
+  font-style: italic;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/playfair-italic.woff2") format("woff2");
+}
 
+/* Palette « espresso & or » : contrastes ≥ 4,5:1 pour tous les textes */
+@theme {
+  --color-ivory: #fbf7ef;
+  --color-cream: #f4ebdc;
+  --color-sand: #e6d5b8;
+  --color-gold: #c9a24a;
+  --color-gold-deep: #9a6a12;
+  --color-gold-soft: #f0d99a;
+  --color-cocoa: #1c1410;
+  --color-espresso: #2a1d15;
+  --color-ink: #1c1917;
+  --color-muted: #57534e;
+
+  --font-display: "Playfair Display", "Georgia", serif;
   --font-serif: "Cormorant Garamond", "Georgia", serif;
   --font-script: "Great Vibes", "Brush Script MT", cursive;
   --font-sans: "Jost", "Segoe UI", system-ui, sans-serif;
@@ -55,16 +73,19 @@
     background: var(--color-ivory);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-weight: 300;
+    font-weight: 400;
+    font-size: 1.0625rem;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
   h1, h2, h3 {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
     font-weight: 500;
-    color: var(--color-cocoa);
+    color: var(--color-ink);
     line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
   }
   ::selection {
     background: var(--color-gold-soft);
@@ -81,14 +102,50 @@
 .paper {
   background-color: var(--color-ivory);
   background-image:
-    radial-gradient(circle at 15% 20%, rgb(198 161 91 / 0.07), transparent 40%),
-    radial-gradient(circle at 85% 70%, rgb(198 161 91 / 0.06), transparent 45%);
+    radial-gradient(circle at 12% 18%, rgb(201 162 74 / 0.12), transparent 38%),
+    radial-gradient(circle at 88% 75%, rgb(201 162 74 / 0.1), transparent 42%);
+}
+
+/* Sections sombres : espresso profond avec halos dorés */
+.night {
+  background-color: var(--color-cocoa);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgb(201 162 74 / 0.22), transparent 55%),
+    radial-gradient(ellipse at 85% 100%, rgb(201 162 74 / 0.16), transparent 50%);
+  color: var(--color-ivory);
+}
+
+/* Texte doré façon feuille d'or */
+.gold-text {
+  background: linear-gradient(100deg, #f7e6b0 0%, #d9b45f 30%, #fff3cf 50%, #c9a24a 70%, #f0d99a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gold-text-deep {
+  background: linear-gradient(100deg, #8a5c0e 0%, #b98a2c 35%, #d9b45f 55%, #9a6a12 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Cadre portrait : anneau or + liseré ivoire */
+.gold-ring {
+  padding: 5px;
+  border-radius: 999px;
+  background: conic-gradient(from 210deg, #f7e6b0, #b98a2c, #fff3cf, #9a6a12, #e9c77b, #f7e6b0);
+  box-shadow: 0 18px 40px -18px rgb(28 20 16 / 0.55);
+}
+.gold-ring > .ring-inner {
+  border-radius: 999px;
+  padding: 4px;
+  background: var(--color-ivory);
 }
 
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.72rem;
-  letter-spacing: 0.32em;
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--color-gold-deep);
   font-weight: 500;
@@ -102,7 +159,7 @@
 .field {
   width: 100%;
   border-radius: 0.75rem;
-  border: 1px solid var(--color-sand);
+  border: 1.5px solid var(--color-sand);
   background: #fffdf9;
   padding: 0.8rem 1rem;
   color: var(--color-ink);
@@ -120,8 +177,10 @@
   justify-content: center;
   gap: 0.6rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, #d4b26e, var(--color-gold) 45%, var(--color-gold-deep));
+  background: linear-gradient(135deg, #e2bf6c, #b98a2c 50%, #8a5c0e);
   color: #fffaf0;
+  min-height: 44px;
+  text-shadow: 0 1px 1px rgb(60 35 5 / 0.35);
   font-weight: 500;
   letter-spacing: 0.04em;
   padding: 0.85rem 1.6rem;
@@ -146,8 +205,10 @@
   justify-content: center;
   gap: 0.5rem;
   border-radius: 999px;
-  border: 1px solid var(--color-gold);
-  color: var(--color-cocoa);
+  border: 1.5px solid var(--color-gold);
+  color: var(--color-ink);
+  font-weight: 500;
+  min-height: 44px;
   padding: 0.7rem 1.3rem;
   transition: background 200ms, color 200ms;
 }
@@ -192,8 +253,8 @@
 .depth:hover,
 .depth:active,
 .depth:focus-visible {
-  transform: translateY(-4px) rotate(-1.5deg) scale(1.02);
-  filter: drop-shadow(0 14px 18px rgb(59 38 24 / 0.28));
+  transform: translateY(-4px) scale(1.02);
+  filter: drop-shadow(0 16px 20px rgb(28 20 16 / 0.3));
 }
 
 /* Pétales */

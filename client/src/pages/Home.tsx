@@ -4,7 +4,6 @@ import { GiftsSection } from "@/components/GiftsSection";
 import { GuestbookSection } from "@/components/GuestbookSection";
 import { HeroSection } from "@/components/HeroSection";
 import { LoveStorySection } from "@/components/LoveStorySection";
-import { HeartClipDefs } from "@/components/Ornaments";
 import { RsvpFormSection } from "@/components/RsvpFormSection";
 import { ScheduleAndDetailsSection } from "@/components/ScheduleAndDetailsSection";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -22,7 +21,6 @@ export default function Home() {
 
   return (
     <>
-      <HeartClipDefs />
       <SiteHeader />
       <main>
         <HeroSection />

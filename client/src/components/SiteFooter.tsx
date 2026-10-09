@@ -6,9 +6,9 @@ import { DovesHeart } from "./Ornaments";
 export function SiteFooter() {
   const ticket = lastTicket();
   return (
-    <footer className="no-print bg-[#2c1c11] px-5 py-14 text-center text-ivory/80">
+    <footer className="no-print night border-t border-gold/30 px-5 py-14 text-center text-ivory/90">
       <DovesHeart className="mx-auto h-8 w-28 text-gold" />
-      <p className="script mt-4 text-4xl text-ivory">Michelle &amp; Marcing</p>
+      <p className="script gold-text mt-4 pb-1 text-5xl">Michelle &amp; Marcing</p>
       <p className="mt-2 text-sm tracking-[0.2em] text-gold-soft">
         {wedding.shortDate} · {wedding.city}
       </p>
@@ -21,7 +21,7 @@ export function SiteFooter() {
             Retrouver mon billet
           </Link>
         )}
-        <Link href="/espace-maries" className="text-ivory/50 underline-offset-4 hover:underline">
+        <Link href="/espace-maries" className="text-ivory/75 underline-offset-4 hover:underline">
           Espace Mariés
         </Link>
       </div>

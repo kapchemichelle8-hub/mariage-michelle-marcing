@@ -37,7 +37,7 @@ function GuestbookCard({ entry, index }: { entry: Entry; index: number }) {
   return (
     <li
       ref={ref}
-      className={`reveal relative rounded-[1.4rem] border border-sand bg-white/85 p-5 shadow-[0_14px_34px_-28px_rgb(59_38_24/0.8)] sm:p-6 ${
+      className={`reveal relative rounded-[1.4rem] border border-gold/40 bg-white p-5 shadow-[0_20px_40px_-28px_rgb(28_20_16/0.6)] sm:p-6 ${
         visible ? "is-visible" : ""
       } ${index % 3 === 1 ? "md:translate-y-5" : ""}`}
     >
@@ -102,7 +102,7 @@ export function GuestbookSection() {
           <h2 id="guestbook-title" className="mt-2 text-4xl sm:text-5xl">
             Vos mots doux
           </h2>
-          <p className="mx-auto mt-3 max-w-lg font-serif text-lg italic text-muted">
+          <p className="mx-auto mt-3 max-w-lg font-display text-lg italic text-ink">
             Chaque bénédiction que vous nous laissez, nous la lisons et nous la gardons.
           </p>
         </Reveal>
@@ -112,7 +112,7 @@ export function GuestbookSection() {
           <p className="mt-10 text-center text-muted">Les messages ne peuvent pas s’afficher pour le moment.</p>
         )}
         {first.data && entries.length === 0 && (
-          <p className="mt-10 text-center font-serif text-xl italic text-muted">
+          <p className="mt-10 text-center font-display text-lg italic text-ink">
             Soyez le premier à nous écrire un mot, en confirmant votre réponse ci-dessous.
           </p>
         )}

@@ -39,14 +39,14 @@ export function CountdownSection() {
           {units.map((u, i) => (
             <div
               key={u.label}
-              className={`rounded-2xl border border-sand bg-white/70 px-1 py-4 shadow-[0_10px_30px_-22px_rgb(59_38_24/0.6)] ${
+              className={`rounded-2xl border border-gold/50 bg-cocoa px-1 py-4 shadow-[0_18px_34px_-18px_rgb(28_20_16/0.7)] ${
                 i % 2 ? "sm:translate-y-2" : ""
               }`}
             >
-              <span className="block font-serif text-3xl tabular-nums text-cocoa sm:text-5xl" aria-live={u.label === "jours" ? "polite" : "off"}>
+              <span className="gold-text block font-display text-3xl font-medium tabular-nums sm:text-5xl" aria-live={u.label === "jours" ? "polite" : "off"}>
                 {String(u.value).padStart(2, "0")}
               </span>
-              <span className="mt-1 block text-[0.65rem] uppercase tracking-[0.2em] text-muted sm:text-xs">
+              <span className="mt-1 block text-[0.68rem] font-medium uppercase tracking-[0.16em] text-ivory/90 sm:text-xs">
                 {u.label}
               </span>
             </div>
@@ -54,7 +54,7 @@ export function CountdownSection() {
         </Reveal>
       )}
       <Reveal delay={200}>
-        <p className="mx-auto mt-8 max-w-md font-serif text-lg italic text-muted">
+        <p className="mx-auto mt-8 max-w-md font-display text-lg italic text-ink">
           {wedding.dateLabel}, à {wedding.city}. Chaque seconde nous rapproche de vous.
         </p>
         <Link href="/jour-j" className="mt-3 inline-block text-sm text-gold-deep underline decoration-gold/40 underline-offset-4 hover:decoration-gold">

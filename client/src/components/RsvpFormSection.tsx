@@ -76,21 +76,21 @@ export function RsvpFormSection() {
   };
 
   return (
-    <section id="rsvp" className="scroll-mt-16 bg-cocoa px-5 py-20 sm:py-24" aria-labelledby="rsvp-title">
+    <section id="rsvp" className="night scroll-mt-16 px-5 py-20 sm:py-28" aria-labelledby="rsvp-title">
       <div className="mx-auto max-w-2xl">
         <Reveal className="text-center text-ivory">
           <p className="eyebrow !text-gold-soft">Votre réponse</p>
           <h2 id="rsvp-title" className="mt-2 text-4xl !text-ivory sm:text-5xl">
             Serez-vous des nôtres ?
           </h2>
-          <p className="mx-auto mt-3 max-w-md font-serif text-lg italic text-ivory/80">
+          <p className="mx-auto mt-3 max-w-md font-display text-lg italic text-ivory/90">
             Merci de nous répondre avant le {wedding.rsvpDeadline}. Votre billet personnel vous
             attend juste après.
           </p>
         </Reveal>
 
         <Reveal delay={120}>
-          <form onSubmit={onSubmit} noValidate className="mt-10 space-y-6 rounded-[2rem] bg-ivory p-6 shadow-2xl sm:p-9">
+          <form onSubmit={onSubmit} noValidate className="mt-10 space-y-6 rounded-[2rem] border border-gold/60 bg-ivory p-6 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.8)] sm:p-9">
             <div>
               <label htmlFor="rsvp-name" className="mb-2 block text-sm font-medium text-cocoa">
                 Nom complet ou nom de famille
