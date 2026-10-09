@@ -1,25 +1,41 @@
-import { lazy, Suspense } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import AdminPage from "./pages/AdminPage";
+import DeclinedPage from "./pages/DeclinedPage";
 import Home from "./pages/Home";
+import SimulationPage from "./pages/SimulationPage";
+import TicketPage from "./pages/TicketPage";
 
-// Les pages secondaires sont chargées à la demande pour alléger l'invitation.
-const TicketPage = lazy(() => import("./pages/TicketPage"));
-const AbsencePage = lazy(() => import("./pages/AbsencePage"));
-const JourJPage = lazy(() => import("./pages/JourJPage"));
-const AdminPage = lazy(() => import("./pages/AdminPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-
-export default function App() {
+function Router() {
   return (
-    <Suspense fallback={<div className="min-h-[100svh] bg-ivory" />}>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/billet/:code" component={TicketPage} />
-        <Route path="/merci" component={AbsencePage} />
-        <Route path="/jour-j" component={JourJPage} />
-        <Route path="/espace-maries" component={AdminPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/billet/:code" component={TicketPage} />
+      <Route path="/indisponible" component={DeclinedPage} />
+      <Route path="/simulation" component={SimulationPage} />
+      <Route path="/admin" component={AdminPage} />
+      <Route path="/404" component={NotFound} />
+      {/* Fallback */}
+      <Route component={NotFound} />
+    </Switch>
   );
 }
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="light">
+        <TooltipProvider>
+          <Toaster position="top-center" richColors />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+}
+
+export default App;

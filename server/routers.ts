@@ -1,166 +1,170 @@
-import { randomInt } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
+import { parse as parseCookie } from "cookie";
 import { z } from "zod";
-import { rsvpInputSchema, TICKET_CODE_PATTERN } from "../shared/rsvp";
-import type { RsvpRow } from "../drizzle/schema";
-import {
-  clearAttempts,
-  createAdminToken,
-  isRateLimited,
-  passwordMatches,
-  recordFailedAttempt,
-} from "./adminAuth";
-import type { RsvpStore } from "./db";
-import { adminProcedure, publicProcedure, router } from "./trpc";
+import * as db from "./db";
+import { getSessionCookieOptions } from "./_core/cookies";
+import { ENV } from "./_core/env";
+import { systemRouter } from "./_core/systemRouter";
+import { publicProcedure, router } from "./_core/trpc";
 
-// Sans I, O, 0 et 1 pour éviter les confusions à la lecture du billet.
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const ADMIN_SESSION_COOKIE = "wedding_admin_session_v2";
+const LEGACY_ADMIN_SESSION_COOKIE = "wedding_admin_session";
 
-export async function generateTicketCode(store: RsvpStore) {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    let suffix = "";
-    for (let i = 0; i < 6; i++) suffix += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
-    const code = `MM-${suffix}`;
-    if (!(await store.ticketCodeExists(code))) return code;
+function generateTicketCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "MM-";
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Code billet indisponible." });
+  return result;
 }
 
-const csvCell = (value: unknown) => {
-  const text = value instanceof Date ? value.toISOString() : String(value ?? "");
-  return `"${text.replace(/"/g, '""')}"`;
-};
-
-export function rsvpsToCsv(rows: RsvpRow[]) {
-  const header = [
-    "id",
-    "nom",
-    "email",
-    "presence",
-    "cote",
-    "personnes",
-    "message",
-    "code_billet",
-    "cree_le",
-    "modifie_le",
-  ];
-  const lines = rows.map((r) =>
-    [
-      r.id,
-      r.name,
-      r.email,
-      r.attendance === "yes" ? "present" : "absent",
-      r.side === "mariee" ? "mariee" : "marie",
-      r.guestsCount,
-      r.message,
-      r.ticketCode,
-      r.createdAt,
-      r.updatedAt,
-    ]
-      .map(csvCell)
-      .join(",")
-  );
-  // BOM pour qu'Excel affiche correctement les accents.
-  return "﻿" + [header.join(","), ...lines].join("\r\n");
+function adminSessionToken() {
+  return createHmac("sha256", ENV.cookieSecret || ENV.adminPassword)
+    .update("michelle-marcing-admin-session")
+    .digest("hex");
 }
+
+function isAdminSessionValid(req: { headers: { cookie?: string } }) {
+  const token = parseCookie(req.headers.cookie || "")[ADMIN_SESSION_COOKIE];
+  if (!token) return false;
+
+  const expected = Buffer.from(adminSessionToken());
+  const received = Buffer.from(token);
+  return received.length === expected.length && timingSafeEqual(received, expected);
+}
+
+function setAdminSession(res: any, req: any) {
+  res.cookie(ADMIN_SESSION_COOKIE, adminSessionToken(), {
+    ...getSessionCookieOptions(req),
+  });
+}
+
+function clearAdminSession(res: any, req: any) {
+  res.clearCookie(ADMIN_SESSION_COOKIE, {
+    ...getSessionCookieOptions(req),
+    maxAge: 0,
+  });
+  res.clearCookie(LEGACY_ADMIN_SESSION_COOKIE, {
+    ...getSessionCookieOptions(req),
+    maxAge: 0,
+  });
+}
+
+const adminSessionProcedure = publicProcedure.use(({ ctx, next }) => {
+  if (!isAdminSessionValid(ctx.req)) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Mot de passe administrateur requis",
+    });
+  }
+
+  return next({ ctx });
+});
 
 export const appRouter = router({
-  rsvp: router({
-    submit: publicProcedure.input(rsvpInputSchema).mutation(async ({ ctx, input }) => {
-      const attending = input.attendance === "yes";
-      const row = await ctx.store.insert({
-        name: input.name,
-        email: input.email ?? null,
-        side: input.side,
-        attendance: input.attendance,
-        guestsCount: attending ? input.guestsCount : 0,
-        message: input.message ? input.message : null,
-        ticketCode: attending ? await generateTicketCode(ctx.store) : null,
-      });
-      return { attendance: row.attendance, ticketCode: row.ticketCode, name: row.name };
+  system: systemRouter,
+  auth: router({
+    me: publicProcedure.query(opts => opts.ctx.user),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return { success: true } as const;
     }),
+  }),
 
-    ticket: publicProcedure
-      .input(z.object({ code: z.string().trim().toUpperCase() }))
-      .query(async ({ ctx, input }) => {
-        if (!TICKET_CODE_PATTERN.test(input.code)) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Billet introuvable." });
+  wedding: router({
+    getMessages: publicProcedure.query(async () => db.getApprovedMessages()),
+
+    getTicket: publicProcedure
+      .input(z.object({ code: z.string().min(3) }))
+      .query(async ({ input }) => {
+        const ticket = await db.getRsvpByTicketCode(input.code);
+        if (!ticket) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Billet introuvable avec ce code d'invitation",
+          });
         }
-        const row = await ctx.store.findByTicketCode(input.code);
-        if (!row || row.attendance !== "yes") {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Billet introuvable." });
-        }
+        return ticket;
+      }),
+
+    submitRsvp: publicProcedure
+      .input(
+        z.object({
+          name: z.string().trim().min(2, "Veuillez renseigner votre nom complet"),
+          side: z.enum(["bride", "groom"], {
+            message: "Veuillez indiquer si vous êtes invité(e) de la mariée ou du marié",
+          }),
+          attendance: z.enum(["yes", "no"]),
+          guestsCount: z.number().int().min(1).max(10).default(1),
+          message: z.string().trim().max(1000).optional().or(z.literal("")),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const ticketCode = generateTicketCode();
+        const saved = await db.createRsvp({
+          name: input.name,
+          side: input.side,
+          attendance: input.attendance,
+          guestsCount: input.attendance === "yes" ? input.guestsCount : 0,
+          message: input.message || null,
+          ticketCode,
+        });
         return {
-          name: row.name,
-          side: row.side,
-          guestsCount: row.guestsCount,
-          ticketCode: row.ticketCode!,
+          success: true,
+          rsvp: saved,
+          ticketCode,
+          attendance: input.attendance,
+          message:
+            input.attendance === "yes"
+              ? "Votre présence a été enregistrée avec succès. Voici votre billet d'invitation officiel !"
+              : "Nous avons bien reçu votre message. Merci infiniment pour votre chaleureuse pensée !",
         };
       }),
   }),
 
-  guestbook: router({
-    // Public : uniquement le nom, le côté et le mot doux. Aucun compteur.
-    list: publicProcedure
-      .input(
-        z.object({
-          offset: z.number().int().min(0).default(0),
-          limit: z.number().int().min(1).max(30).default(3),
-        })
-      )
-      .query(({ ctx, input }) => ctx.store.listGuestbook(input.offset, input.limit)),
-  }),
-
   admin: router({
     login: publicProcedure
-      .input(z.object({ password: z.string().min(1).max(200) }))
-      .mutation(async ({ ctx, input }) => {
-        if (isRateLimited(ctx.ip)) {
+      .input(z.object({ password: z.string().min(1, "Veuillez entrer le mot de passe") }))
+      .mutation(({ input, ctx }) => {
+        const received = Buffer.from(input.password);
+        const expected = Buffer.from(ENV.adminPassword);
+        const isValid = received.length === expected.length && timingSafeEqual(received, expected);
+
+        if (!isValid) {
           throw new TRPCError({
-            code: "TOO_MANY_REQUESTS",
-            message: "Trop de tentatives. Réessayez dans quelques minutes.",
+            code: "UNAUTHORIZED",
+            message: "Mot de passe incorrect",
           });
         }
-        if (!ctx.sessionSecret || !passwordMatches(input.password, ctx.adminPassword)) {
-          recordFailedAttempt(ctx.ip);
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Mot de passe incorrect." });
-        }
-        clearAttempts(ctx.ip);
-        return { token: await createAdminToken(ctx.sessionSecret) };
+
+        setAdminSession(ctx.res, ctx.req);
+        return { success: true } as const;
       }),
 
-    stats: adminProcedure.query(async ({ ctx }) => {
-      const rows = await ctx.store.listAll();
-      const present = rows.filter((r) => r.attendance === "yes");
-      const guests = (side?: "mariee" | "marie") =>
-        present
-          .filter((r) => !side || r.side === side)
-          .reduce((sum, r) => sum + r.guestsCount, 0);
-      return {
-        responses: rows.length,
-        present: present.length,
-        absent: rows.length - present.length,
-        totalGuests: guests(),
-        guestsMariee: guests("mariee"),
-        guestsMarie: guests("marie"),
-        messages: rows.filter((r) => r.message && r.message.trim() !== "").length,
-      };
+    logout: publicProcedure.mutation(({ ctx }) => {
+      clearAdminSession(ctx.res, ctx.req);
+      return { success: true } as const;
     }),
 
-    listRsvps: adminProcedure.query(({ ctx }) => ctx.store.listAll()),
+    me: publicProcedure.query(({ ctx }) => ({ authenticated: isAdminSessionValid(ctx.req) })),
 
-    exportCsv: adminProcedure.query(async ({ ctx }) => ({
-      filename: `rsvps-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.csv`,
-      csv: rsvpsToCsv(await ctx.store.listAll()),
-    })),
-
-    // Suppression d'UNE ligne, par identifiant exact, avec confirmation explicite.
-    deleteRsvp: adminProcedure
-      .input(z.object({ id: z.number().int().positive(), confirm: z.literal(true) }))
-      .mutation(async ({ ctx, input }) => {
-        const deleted = await ctx.store.deleteById(input.id);
-        if (!deleted) throw new TRPCError({ code: "NOT_FOUND", message: "Réponse introuvable." });
-        return { deletedId: input.id };
+    listRsvps: adminSessionProcedure.query(async () => db.getAllRsvps()),
+    stats: adminSessionProcedure.query(async () => db.getPublicWeddingStats()),
+    deleteRsvp: adminSessionProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.deleteRsvp(input.id);
+        return { success: true } as const;
+      }),
+    deleteGuestbookMessage: adminSessionProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.deleteGuestbookMessage(input.id);
+        return { success: true } as const;
       }),
   }),
 });
