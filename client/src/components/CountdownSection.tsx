@@ -70,9 +70,9 @@ export function CountdownSection({ standalone = false, autoSimulate = false }: {
             <div className="relative w-44 h-44 mx-auto mb-5 rounded-full overflow-hidden border-4 border-[#c69a58] shadow-xl">
               <img src={WEDDING_CONFIG.assets.heroCouple} alt="Michelle et Marcing" className="w-full h-full object-cover" />
             </div>
-            <h3 className="font-serif-luxury text-2xl font-bold text-[#855f24] mb-2">Le Grand Jour est Arrivé !</h3>
+            <h3 className="font-serif-luxury text-2xl font-bold text-[#855f24] mb-2">C’est aujourd’hui !</h3>
             <p className="text-sm text-[#5a4632] leading-relaxed mb-6">
-              Aujourd'hui, sous le regard bienveillant de nos aïeux et entourés de vous tous, Michelle & Marcing scellent leur union pour toujours.
+              Aujourd’hui, entourés de vous tous, Michelle et Marcing se disent oui. Merci d’être là.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button type="button" onClick={triggerCelebration} className="px-6 py-2.5 rounded-full gold-gradient text-white text-xs font-semibold shadow hover:brightness-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
@@ -86,8 +86,8 @@ export function CountdownSection({ standalone = false, autoSimulate = false }: {
         ) : (
           <div className="flex flex-col items-center">
             {/* Ligne épurée identique à l'exemple : 091:16:42:06 */}
-            <div className="font-serif-luxury text-4xl sm:text-6xl md:text-7xl font-light tracking-tight text-[#1e1511]">
-              <span>{pad(timeLeft.days, 3)}</span>
+            <div className="font-serif-luxury text-5xl sm:text-6xl md:text-7xl font-semibold tabular-nums tracking-tight text-[#2d241e]">
+              <span>{pad(timeLeft.days)}</span>
               <span className="text-[#c69a58] mx-1">:</span>
               <span>{pad(timeLeft.hours)}</span>
               <span className="text-[#c69a58] mx-1">:</span>
@@ -95,17 +95,17 @@ export function CountdownSection({ standalone = false, autoSimulate = false }: {
               <span className="text-[#c69a58] mx-1">:</span>
               <span>{pad(timeLeft.seconds)}</span>
             </div>
-            <div className="flex items-center justify-center gap-6 sm:gap-12 md:gap-16 text-[10px] sm:text-xs tracking-[0.22em] text-[#857365] uppercase font-semibold mt-2">
-              <span>Days</span>
-              <span>Hours</span>
-              <span>Mins</span>
-              <span>Secs</span>
+            <div className="flex items-center justify-center gap-6 sm:gap-12 md:gap-16 text-[11px] sm:text-xs tracking-[0.22em] text-[#6f5c4c] uppercase font-semibold mt-2">
+              <span>Jours</span>
+              <span>Heures</span>
+              <span>Min</span>
+              <span>Sec</span>
             </div>
 
-            <div className="mt-6 inline-flex items-center gap-2 text-[11px] text-[#8d7c6e]">
-              <span>Envie de voir l'effet du jour J ?</span>
+            <div className="mt-6 inline-flex flex-wrap justify-center items-center gap-2 text-sm text-[#6f5c4c]">
+              <span>Envie d’un avant-goût du jour J ?</span>
               <Link href={standalone ? "#" : "/simulation"} onClick={standalone ? (event) => { event.preventDefault(); setForceReached(true); triggerCelebration(); } : undefined} className="text-[#855f24] font-semibold underline hover:text-[#5d4016] flex items-center gap-1 cursor-pointer">
-                <Sparkles className="w-3 h-3" /> Simuler l'explosion
+                <Sparkles className="w-3 h-3" /> Faire pleuvoir les confettis
               </Link>
             </div>
           </div>
