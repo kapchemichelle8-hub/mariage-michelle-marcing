@@ -99,16 +99,23 @@ export const appRouter = router({
             message: "Veuillez indiquer si vous êtes invité(e) de la mariée ou du marié",
           }),
           attendance: z.enum(["yes", "no"]),
+          events: z.array(z.enum(["civil", "church", "party"])).optional(),
           guestsCount: z.number().int().min(1).max(10).default(1),
           message: z.string().trim().max(1000).optional().or(z.literal("")),
         })
       )
       .mutation(async ({ input }) => {
         const ticketCode = generateTicketCode();
+        const eventsString =
+          input.attendance === "yes" && input.events && input.events.length > 0
+            ? input.events.join(",")
+            : null;
+
         const saved = await db.createRsvp({
           name: input.name,
           side: input.side,
           attendance: input.attendance,
+          events: eventsString,
           guestsCount: input.attendance === "yes" ? input.guestsCount : 0,
           message: input.message || null,
           ticketCode,

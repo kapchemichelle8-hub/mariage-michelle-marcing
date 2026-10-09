@@ -114,8 +114,14 @@ export default function Home() {
         <div className="max-w-4xl mx-auto space-y-4">
           <p className="font-script text-5xl gold-foil pb-1">{WEDDING_CONFIG.bride} &amp; {WEDDING_CONFIG.groom}</p>
           <p className="font-serif-luxury text-sm uppercase tracking-[0.25em] text-[#d9c7ac]">{WEDDING_CONFIG.dateString} · Douala, Cameroun</p>
-          <p className="font-serif-luxury italic text-lg text-[#e8dccb] max-w-md mx-auto">Merci de porter notre union dans vos prières. On a tellement hâte de vous serrer dans nos bras.</p>
-          <div className="pt-6 border-t border-white/10 flex items-center justify-center gap-4 text-xs text-[#b9a993]"><Link href="/admin" className="hover:text-[#d8ab66] transition-colors flex items-center gap-1.5"><LockKeyhole className="w-3.5 h-3.5" /> Accès réservé aux mariés</Link></div>
+          <p className="font-serif-luxury italic text-lg text-[#e8dccb] max-w-lg mx-auto">
+            Merci de porter notre union dans vos prières et dans vos cœurs. Nous nous réjouissons infiniment de vivre cette journée bénie en votre précieuse compagnie.
+          </p>
+          <div className="pt-6 border-t border-white/10 flex items-center justify-center gap-4 text-xs text-[#b9a993]">
+            <Link href="/admin" className="hover:text-[#d8ab66] transition-colors flex items-center gap-1.5">
+              <LockKeyhole className="w-3.5 h-3.5" /> Accès réservé aux mariés
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

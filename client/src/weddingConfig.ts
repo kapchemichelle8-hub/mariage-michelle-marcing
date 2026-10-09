@@ -20,7 +20,7 @@ export const WEDDING_CONFIG = {
   gifts: {
     title: "Dons et cadeaux",
     intro:
-      "Votre présence est déjà le plus beau des cadeaux. Si vous souhaitez malgré tout nous gâter, une petite attention nous aidera à bâtir notre foyer. Merci du fond du cœur.",
+      "Votre présence et vos prières à nos côtés sont déjà notre plus grand bonheur. Si vous désirez nous témoigner une attention particulière ou participer à notre nouvelle aventure à deux, vos gestes d’amour seront reçus avec une immense gratitude.",
     recipient: "Kapche Michelle",
     numbers: ["688915296", "651974889"],
     interac: "kusstella@gmail.com",
@@ -41,6 +41,7 @@ export const WEDDING_CONFIG = {
   },
   schedule: [
     {
+      id: "civil",
       start: "13 h 00",
       end: "",
       title: "Le oui à la mairie",
@@ -50,6 +51,7 @@ export const WEDDING_CONFIG = {
       confirmed: false,
     },
     {
+      id: "church",
       start: "15 h 00",
       end: "",
       title: "La bénédiction à l’église",
@@ -59,6 +61,7 @@ export const WEDDING_CONFIG = {
       confirmed: true,
     },
     {
+      id: "party",
       start: "20 h 00",
       end: "",
       title: "La soirée",

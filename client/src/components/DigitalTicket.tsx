@@ -9,12 +9,22 @@ export interface TicketData {
   guestsCount: number;
   attendance: "yes" | "no";
   side?: "bride" | "groom" | null;
+  events?: string | null;
   createdAt?: Date | string;
 }
+
+const EVENT_LABELS: Record<string, { label: string; time: string }> = {
+  civil: { label: "Mairie", time: "13 h 00" },
+  church: { label: "Église", time: "15 h 00" },
+  party: { label: "Soirée", time: "20 h 00" },
+};
 
 export function DigitalTicket({ ticket }: { ticket: TicketData }) {
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+
+  const selectedEventKeys = ticket.events ? ticket.events.split(",").map((s) => s.trim()) : [];
+  const hasEventDetails = selectedEventKeys.length > 0;
 
   const makePng = async () => {
     if (!ticketRef.current) throw new Error("Billet indisponible");
@@ -81,25 +91,146 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
 
   return (
     <div className="ticket-print-area w-full max-w-xl mx-auto my-6 print:m-0 print:max-w-none">
-      <div ref={ticketRef} className="relative bg-white text-[#2d241e] rounded-3xl p-6 md:p-8 border-2 border-[#c69a58]/40 shadow-2xl overflow-hidden print:border print:shadow-none print:rounded-none">
+      <div
+        ref={ticketRef}
+        className="relative bg-white text-[#2d241e] rounded-3xl p-6 md:p-8 border-2 border-[#c69a58]/40 shadow-2xl overflow-hidden print:border print:shadow-none print:rounded-none"
+      >
         <div className="absolute top-0 left-0 right-0 h-3 gold-gradient" />
         <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#c69a58]/10 rounded-full blur-2xl pointer-events-none print:hidden" />
-        <div className="text-center pb-6 border-b border-dashed border-[#c69a58]/40"><span className="font-script text-3xl text-[#9d7537]">Michelle & Marcing</span><h3 className="font-serif-luxury text-lg md:text-xl font-bold tracking-wider uppercase text-[#2d241e] mt-1">Billet d'Accès Officiel</h3><p className="text-xs uppercase tracking-widest text-[#9d7537] font-semibold mt-1">{WEDDING_CONFIG.title}</p></div>
-        <div className="py-6 space-y-5">
-          <div className="bg-[#fcfaf7] border border-[#ebdcc8] rounded-2xl p-4 text-center"><span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">{ticket.side === "bride" ? `Invité(e) de la mariée · ${WEDDING_CONFIG.bride}` : ticket.side === "groom" ? `Invité(e) du marié · ${WEDDING_CONFIG.groom}` : "Invité(e) d'honneur"}</span><p className="font-serif-luxury text-xl md:text-2xl font-bold text-[#855f24]">{ticket.name}</p><div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-[#c69a58]/15 rounded-full text-xs font-semibold text-[#855f24]"><CheckCircle2 className="w-3.5 h-3.5" /><span>Présence confirmée pour {ticket.guestsCount} {ticket.guestsCount > 1 ? "personnes" : "personne"}</span></div></div>
-          <div className="grid grid-cols-2 gap-4 text-xs md:text-sm"><div className="p-3 bg-[#faf7f2] rounded-xl border border-[#ebdcc8]/60"><span className="text-muted-foreground block text-[11px] uppercase tracking-wider">Date</span><strong className="text-[#2d241e] font-semibold block mt-0.5">{WEDDING_CONFIG.dateString}</strong><span className="text-muted-foreground text-[11px]">Dès {WEDDING_CONFIG.schedule[0].start}</span></div><div className="p-3 bg-[#faf7f2] rounded-xl border border-[#ebdcc8]/60"><span className="text-muted-foreground block text-[11px] uppercase tracking-wider">Lieu</span><strong className="text-[#2d241e] font-semibold block mt-0.5">Douala</strong><span className="text-muted-foreground text-[11px]">Mairie 13 h · Église 15 h · Soirée 20 h</span></div></div>
-          <div className="flex gap-2 items-start p-4 rounded-xl bg-gradient-to-r from-[#fbf8f3] via-[#f7f0e3] to-[#fbf8f3] border border-[#c69a58]/30"><MapPin className="w-4 h-4 mt-0.5 text-[#9d7537] shrink-0" /><p className="text-xs text-[#5a4632] leading-relaxed">Église à 15 h : paroisse Christ Sauveur de Mbangué, l’église au toit rouge. Les adresses de la mairie et de la soirée vous seront envoyées très bientôt.</p></div>
-          <div className="p-4 rounded-xl bg-gradient-to-r from-[#fbf8f3] via-[#f7f0e3] to-[#fbf8f3] border border-[#c69a58]/30 text-center"><Heart className="w-5 h-5 mx-auto text-[#9d7537] mb-1.5 fill-[#c69a58]/30" /><p className="font-serif-luxury text-sm md:text-base font-semibold text-[#855f24]">« Merci d’être là pour notre oui. »</p><p className="text-xs text-muted-foreground mt-1">Votre présence rend ce jour encore plus beau.</p></div>
-          <div className="flex items-center justify-between pt-2 border-t border-dashed border-[#c69a58]/40"><div><span className="text-[10px] uppercase tracking-wider text-muted-foreground block">N° d'invitation unique</span><span className="font-mono text-base font-bold text-[#2d241e] tracking-wider">{ticket.ticketCode}</span></div><div className="w-16 h-16 rounded-xl border-2 border-[#c69a58]/40 flex flex-col items-center justify-center bg-[#faf7f2] p-1"><QrCode className="w-10 h-10 text-[#855f24]" /><span className="text-[8px] font-mono text-muted-foreground">VALIDÉ</span></div></div>
+        <div className="text-center pb-6 border-b border-dashed border-[#c69a58]/40">
+          <span className="font-script text-3xl text-[#9d7537]">Michelle & Marcing</span>
+          <h3 className="font-serif-luxury text-lg md:text-xl font-bold tracking-wider uppercase text-[#2d241e] mt-1">
+            Billet d'Accès Officiel
+          </h3>
+          <p className="text-xs uppercase tracking-widest text-[#9d7537] font-semibold mt-1">
+            {WEDDING_CONFIG.title}
+          </p>
         </div>
-        <div className="hidden md:block absolute left-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#faf7f2] border-r-2 border-[#c69a58]/40 print:hidden" /><div className="hidden md:block absolute right-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#faf7f2] border-l-2 border-[#c69a58]/40 print:hidden" />
+
+        <div className="py-6 space-y-5">
+          <div className="bg-[#fcfaf7] border border-[#ebdcc8] rounded-2xl p-4 text-center">
+            <span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">
+              {ticket.side === "bride"
+                ? `Invité(e) de la mariée · ${WEDDING_CONFIG.bride}`
+                : ticket.side === "groom"
+                ? `Invité(e) du marié · ${WEDDING_CONFIG.groom}`
+                : "Invité(e) d'honneur"}
+            </span>
+            <p className="font-serif-luxury text-xl md:text-2xl font-bold text-[#855f24]">{ticket.name}</p>
+            <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-[#c69a58]/15 rounded-full text-xs font-semibold text-[#855f24]">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>
+                Présence confirmée pour {ticket.guestsCount} {ticket.guestsCount > 1 ? "personnes" : "personne"}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-xs md:text-sm">
+            <div className="p-3 bg-[#faf7f2] rounded-xl border border-[#ebdcc8]/60">
+              <span className="text-muted-foreground block text-[11px] uppercase tracking-wider">Date</span>
+              <strong className="text-[#2d241e] font-semibold block mt-0.5">{WEDDING_CONFIG.dateString}</strong>
+              <span className="text-muted-foreground text-[11px]">Dès {WEDDING_CONFIG.schedule[0].start}</span>
+            </div>
+            <div className="p-3 bg-[#faf7f2] rounded-xl border border-[#ebdcc8]/60">
+              <span className="text-muted-foreground block text-[11px] uppercase tracking-wider">Lieu</span>
+              <strong className="text-[#2d241e] font-semibold block mt-0.5">Douala</strong>
+              <span className="text-muted-foreground text-[11px]">Cameroun</span>
+            </div>
+          </div>
+
+          {/* Moments choisis */}
+          <div className="p-3.5 bg-[#fcfaf7] rounded-xl border border-[#c69a58]/35">
+            <span className="text-[11px] uppercase tracking-wider text-[#855f24] font-semibold block mb-2">
+              Moments de célébration choisis
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {hasEventDetails ? (
+                selectedEventKeys.map((key) => {
+                  const info = EVENT_LABELS[key] || { label: key, time: "" };
+                  return (
+                    <span
+                      key={key}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4ede1] border border-[#c69a58]/40 text-xs font-semibold text-[#6c4b1a]"
+                    >
+                      <CheckCircle2 className="w-3 h-3 text-[#c69a58]" />
+                      <span>{info.label}</span>
+                      {info.time && <span className="text-[10px] text-[#9d7537]">({info.time})</span>}
+                    </span>
+                  );
+                })
+              ) : (
+                <div className="text-xs text-[#6c4b1a] space-x-2">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#f4ede1] border border-[#c69a58]/30">Mairie 13 h</span>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#f4ede1] border border-[#c69a58]/30">Église 15 h</span>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#f4ede1] border border-[#c69a58]/30">Soirée 20 h</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2 items-start p-4 rounded-xl bg-gradient-to-r from-[#fbf8f3] via-[#f7f0e3] to-[#fbf8f3] border border-[#c69a58]/30">
+            <MapPin className="w-4 h-4 mt-0.5 text-[#9d7537] shrink-0" />
+            <p className="text-xs text-[#5a4632] leading-relaxed">
+              Église à 15 h : paroisse Christ Sauveur de Mbangué, l’église au toit rouge. Les adresses précises de la mairie et de la soirée vous seront envoyées très bientôt.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-gradient-to-r from-[#fbf8f3] via-[#f7f0e3] to-[#fbf8f3] border border-[#c69a58]/30 text-center">
+            <Heart className="w-5 h-5 mx-auto text-[#9d7537] mb-1.5 fill-[#c69a58]/30" />
+            <p className="font-serif-luxury text-sm md:text-base font-semibold text-[#855f24]">
+              « Merci d’être là pour notre oui. »
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Votre présence rend ce jour encore plus beau.</p>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-dashed border-[#c69a58]/40">
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground block">N° d'invitation unique</span>
+              <span className="font-mono text-base font-bold text-[#2d241e] tracking-wider">{ticket.ticketCode}</span>
+            </div>
+            <div className="w-16 h-16 rounded-xl border-2 border-[#c69a58]/40 flex flex-col items-center justify-center bg-[#faf7f2] p-1">
+              <QrCode className="w-10 h-10 text-[#855f24]" />
+              <span className="text-[8px] font-mono text-muted-foreground">VALIDÉ</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden md:block absolute left-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#faf7f2] border-r-2 border-[#c69a58]/40 print:hidden" />
+        <div className="hidden md:block absolute right-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#faf7f2] border-l-2 border-[#c69a58]/40 print:hidden" />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3 justify-center print:hidden">
-        <button type="button" onClick={handleDownloadPng} disabled={isExporting} className="px-4 py-2.5 rounded-full gold-gradient text-white font-medium text-xs shadow-md hover:brightness-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"><ImageDown className="w-4 h-4" /> Télécharger en PNG</button>
-        <button type="button" onClick={handleDownloadPdf} disabled={isExporting} className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"><FileDown className="w-4 h-4" /> Télécharger en PDF</button>
-        <button type="button" onClick={handlePrint} disabled={isExporting} className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"><Download className="w-4 h-4" /> Imprimer uniquement le billet</button>
-        <button type="button" onClick={handleShare} className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer"><Share2 className="w-4 h-4" /> Partager mon invitation</button>
+        <button
+          type="button"
+          onClick={handleDownloadPng}
+          disabled={isExporting}
+          className="px-4 py-2.5 rounded-full gold-gradient text-white font-medium text-xs shadow-md hover:brightness-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+        >
+          <ImageDown className="w-4 h-4" /> Télécharger en PNG
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={isExporting}
+          className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"
+        >
+          <FileDown className="w-4 h-4" /> Télécharger en PDF
+        </button>
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={isExporting}
+          className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"
+        >
+          <Download className="w-4 h-4" /> Imprimer uniquement le billet
+        </button>
+        <button
+          type="button"
+          onClick={handleShare}
+          className="px-4 py-2.5 rounded-full border border-[#c69a58] text-[#855f24] hover:bg-[#c69a58]/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer"
+        >
+          <Share2 className="w-4 h-4" /> Partager mon invitation
+        </button>
       </div>
     </div>
   );
