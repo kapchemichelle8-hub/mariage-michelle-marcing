@@ -5,6 +5,20 @@ import { Link } from "wouter";
 import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
 
+const EVENT_LABELS: Record<string, string> = {
+  civil: "Mairie",
+  church: "Église",
+  party: "Soirée",
+};
+
+function formatEvents(events?: string | null) {
+  if (!events) return "Tous les moments";
+  return events
+    .split(",")
+    .map((e) => EVENT_LABELS[e.trim()] || e.trim())
+    .join(", ");
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,13 +49,12 @@ export default function AdminPage() {
     const lock = () => logoutMutation.mutate();
     window.addEventListener("pagehide", lock);
     return () => {
-      // Toute navigation hors de l’espace privé invalide aussi la session côté serveur.
       window.removeEventListener("pagehide", lock);
       lock();
     };
-    // Le nettoyage doit être lié uniquement à la sortie de cette page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
   const deleteRsvpMutation = trpc.admin.deleteRsvp.useMutation({
     onSuccess: async () => { await Promise.all([statsQuery.refetch(), listQuery.refetch()]); toast.success("Confirmation supprimée."); },
     onError: (error) => toast.error(error.message),
@@ -59,10 +72,16 @@ export default function AdminPage() {
 
   const handleExportCsv = () => {
     if (!rsvps?.length) return;
-    const headers = ["Code Billet", "Nom", "Invité de", "Présence", "Nombre de personnes", "Message", "Date de réponse"];
+    const headers = ["Code Billet", "Nom", "Invité de", "Moments choisis", "Présence", "Nombre de personnes", "Message", "Date de réponse"];
     const rows = rsvps.map((r) => [
-      `"${r.ticketCode}"`, `"${r.name.replace(/"/g, '""')}"`, `"${sideLabel(r.side)}"`,
-      r.attendance === "yes" ? "Oui" : "Non", r.guestsCount, `"${(r.message || "").replace(/"/g, '""')}"`, `"${new Date(r.createdAt).toLocaleString("fr-FR")}"`,
+      `"${r.ticketCode}"`,
+      `"${r.name.replace(/"/g, '""')}"`,
+      `"${sideLabel(r.side)}"`,
+      `"${formatEvents(r.events)}"`,
+      r.attendance === "yes" ? "Oui" : "Non",
+      r.guestsCount,
+      `"${(r.message || "").replace(/"/g, '""')}"`,
+      `"${new Date(r.createdAt).toLocaleString("fr-FR")}"`,
     ]);
     const blob = new Blob(["\uFEFF" + [headers.join(";"), ...rows.map((row) => row.join(";"))].join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -131,7 +150,7 @@ export default function AdminPage() {
 
         <div className="card-luxury rounded-3xl p-6 border-[#ebdcc8]">
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6"><div className="relative flex-1 max-w-md"><Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" /><input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Rechercher par nom, code de billet..." className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#ebdcc8] bg-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#c69a58]" /></div><div className="flex items-center gap-2 flex-wrap"><span className="text-xs text-muted-foreground">Filtrer :</span>{(["all", "yes", "no"] as const).map((filter) => <button key={filter} type="button" onClick={() => setFilterAttendance(filter)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${filterAttendance === filter ? "bg-[#2d241e] text-white" : "bg-white border border-[#ebdcc8] text-[#5a4632]"}`}>{filter === "all" ? `Tous (${rsvps?.length || 0})` : filter === "yes" ? `Présents (${stats?.attendingResponses || 0})` : `Absents (${stats?.declinedResponses || 0})`}</button>)}<span className="w-px h-5 bg-[#ebdcc8] mx-1" />{(["all", "bride", "groom"] as const).map((filter) => <button key={filter} type="button" onClick={() => setFilterSide(filter)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${filterSide === filter ? "bg-[#9d7537] text-white" : "bg-white border border-[#ebdcc8] text-[#5a4632]"}`}>{filter === "all" ? "Les deux côtés" : sideLabel(filter)}</button>)}</div></div>
-          {listQuery.isLoading ? <div className="py-16 text-center text-muted-foreground flex flex-col items-center gap-2"><Loader2 className="w-6 h-6 animate-spin text-[#9d7537]" /><span className="text-xs">Chargement des invités...</span></div> : filtered.length === 0 ? <div className="py-16 text-center text-muted-foreground text-xs">Aucune réponse ne correspond aux critères.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-xs md:text-sm"><thead><tr className="border-b border-[#ebdcc8] text-[11px] uppercase tracking-wider text-muted-foreground"><th className="py-3 px-3">Billet</th><th className="py-3 px-3">Nom de l'invité</th><th className="py-3 px-3">Invité de</th><th className="py-3 px-3">Statut</th><th className="py-3 px-3 text-center">Convives</th><th className="py-3 px-3">Message</th><th className="py-3 px-3">Date</th><th className="py-3 px-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-[#ebdcc8]/60">{filtered.map((item) => <tr key={item.id} className="hover:bg-white/60 transition-colors"><td className="py-3.5 px-3"><Link href={`/billet/${item.ticketCode}`} className="font-mono font-bold text-[#855f24] hover:underline">{item.ticketCode}</Link></td><td className="py-3.5 px-3"><div className="font-medium text-[#2d241e]">{item.name}</div></td><td className="py-3.5 px-3 text-xs font-medium text-[#855f24] whitespace-nowrap">{sideLabel(item.side)}</td><td className="py-3.5 px-3">{item.attendance === "yes" ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold"><CheckCircle className="w-3 h-3" /> Présent</span> : <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold">Absent</span>}</td><td className="py-3.5 px-3 text-center font-bold text-[#2d241e]">{item.attendance === "yes" ? item.guestsCount : 0}</td><td className="py-3.5 px-3 max-w-xs text-xs text-[#5a4632] italic truncate">{item.message || <span className="text-muted-foreground not-italic">—</span>}</td><td className="py-3.5 px-3 text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td><td className="py-3.5 px-3"><div className="flex items-center justify-end gap-1"><button type="button" onClick={() => item.message && deleteMessage(item.id, item.name)} disabled={!item.message || deleteMessageMutation.isPending} className="p-2 rounded-lg text-[#9d7537] hover:bg-[#f4ede1] disabled:opacity-30 cursor-pointer" title="Supprimer le mot d'or"><Trash2 className="w-3.5 h-3.5" /></button><button type="button" onClick={() => deleteRsvp(item.id, item.name)} disabled={deleteRsvpMutation.isPending} className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer" title="Supprimer la confirmation"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>)}</tbody></table></div>}
+          {listQuery.isLoading ? <div className="py-16 text-center text-muted-foreground flex flex-col items-center gap-2"><Loader2 className="w-6 h-6 animate-spin text-[#9d7537]" /><span className="text-xs">Chargement des invités...</span></div> : filtered.length === 0 ? <div className="py-16 text-center text-muted-foreground text-xs">Aucune réponse ne correspond aux critères.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-xs md:text-sm"><thead><tr className="border-b border-[#ebdcc8] text-[11px] uppercase tracking-wider text-muted-foreground"><th className="py-3 px-3">Billet</th><th className="py-3 px-3">Nom de l'invité</th><th className="py-3 px-3">Invité de</th><th className="py-3 px-3">Moments</th><th className="py-3 px-3">Statut</th><th className="py-3 px-3 text-center">Convives</th><th className="py-3 px-3">Message</th><th className="py-3 px-3">Date</th><th className="py-3 px-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-[#ebdcc8]/60">{filtered.map((item) => <tr key={item.id} className="hover:bg-white/60 transition-colors"><td className="py-3.5 px-3"><Link href={`/billet/${item.ticketCode}`} className="font-mono font-bold text-[#855f24] hover:underline">{item.ticketCode}</Link></td><td className="py-3.5 px-3"><div className="font-medium text-[#2d241e]">{item.name}</div></td><td className="py-3.5 px-3 text-xs font-medium text-[#855f24] whitespace-nowrap">{sideLabel(item.side)}</td><td className="py-3.5 px-3 text-xs text-[#6c4b1a]">{formatEvents(item.events)}</td><td className="py-3.5 px-3">{item.attendance === "yes" ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold"><CheckCircle className="w-3 h-3" /> Présent</span> : <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold">Absent</span>}</td><td className="py-3.5 px-3 text-center font-bold text-[#2d241e]">{item.attendance === "yes" ? item.guestsCount : 0}</td><td className="py-3.5 px-3 max-w-xs text-xs text-[#5a4632] italic truncate">{item.message || <span className="text-muted-foreground not-italic">—</span>}</td><td className="py-3.5 px-3 text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td><td className="py-3.5 px-3"><div className="flex items-center justify-end gap-1"><button type="button" onClick={() => item.message && deleteMessage(item.id, item.name)} disabled={!item.message || deleteMessageMutation.isPending} className="p-2 rounded-lg text-[#9d7537] hover:bg-[#f4ede1] disabled:opacity-30 cursor-pointer" title="Supprimer le mot d'or"><Trash2 className="w-3.5 h-3.5" /></button><button type="button" onClick={() => deleteRsvp(item.id, item.name)} disabled={deleteRsvpMutation.isPending} className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer" title="Supprimer la confirmation"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>)}</tbody></table></div>}
         </div>
       </div>
     </div>

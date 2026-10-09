@@ -1,0 +1,1 @@
+ALTER TABLE `rsvps` ADD `events` varchar(120);

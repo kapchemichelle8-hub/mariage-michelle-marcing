@@ -5,11 +5,18 @@ import { DigitalTicket } from "../components/DigitalTicket";
 
 export default function TicketPage() {
   const [, params] = useRoute("/billet/:code");
-  const code = params?.code || "";
+  const code = (params?.code || "").trim();
 
   const { data: ticket, isLoading, error } = trpc.wedding.getTicket.useQuery(
     { code },
-    { enabled: Boolean(code) }
+    {
+      enabled: Boolean(code && code.length >= 3),
+      retry: (failureCount, err) => {
+        // Ne pas insister si le serveur confirme que le billet n'existe pas
+        if ((err as any)?.data?.code === "NOT_FOUND") return false;
+        return failureCount < 2;
+      },
+    }
   );
 
   return (
@@ -32,11 +39,11 @@ export default function TicketPage() {
         <div className="card-luxury p-10 rounded-3xl text-center space-y-4 max-w-md w-full">
           <h2 className="font-serif-luxury text-xl font-bold text-destructive">Billet introuvable</h2>
           <p className="text-xs text-muted-foreground">
-            Aucune invitation ne correspond au code <strong>{code}</strong>. Veuillez vérifier le lien reçu ou remplir le formulaire d'invitation.
+            Aucune invitation active ne correspond au code <strong>{code}</strong>. Si vous avez effectué une nouvelle réponse, veuillez vérifier le lien affiché ou renouveler votre confirmation.
           </p>
           <Link
             href="/#rsvp"
-            className="inline-block px-6 py-2.5 rounded-full gold-gradient text-white text-xs font-semibold"
+            className="inline-block px-6 py-2.5 rounded-full gold-gradient text-white text-xs font-semibold shadow hover:brightness-105 transition-all"
           >
             Aller au formulaire RSVP
           </Link>
@@ -49,6 +56,7 @@ export default function TicketPage() {
             guestsCount: ticket.guestsCount,
             attendance: ticket.attendance,
             side: ticket.side,
+            events: (ticket as any).events,
             createdAt: ticket.createdAt,
           }}
         />
