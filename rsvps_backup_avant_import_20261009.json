@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1290001,
+    "name": "Tantine Marie & Oncle Jean",
+    "email": "marie.jean@example.com",
+    "attendance": "yes",
+    "side": null,
+    "guestsCount": 2,
+    "message": "Que du bonheur pour cette magnifique célébration !",
+    "ticketCode": "MM-LNGBJ3",
+    "createdAt": "2026-09-25 12:07:00",
+    "updatedAt": "2026-09-25 12:07:00"
+  },
+  {
+    "id": 1320001,
+    "name": "M alima",
+    "email": null,
+    "attendance": "yes",
+    "side": null,
+    "guestsCount": 2,
+    "message": "mignon les enfants",
+    "ticketCode": "MM-7QFCWB",
+    "createdAt": "2026-09-26 11:36:06",
+    "updatedAt": "2026-09-26 11:36:06"
+  },
+  {
+    "id": 1320002,
+    "name": "elise",
+    "email": null,
+    "attendance": "no",
+    "side": null,
+    "guestsCount": 1,
+    "message": "que le seigneur vous protége",
+    "ticketCode": "MM-VZBNH4",
+    "createdAt": "2026-09-26 11:29:54",
+    "updatedAt": "2026-09-26 11:29:54"
+  }
+]
