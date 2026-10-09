@@ -1,209 +1,159 @@
-import { Car, Church, Clock, Coffee, Heart, MapPin, Music, Camera, Play, Scale, Wine } from "lucide-react";
-import { useState } from "react";
+import { Church, Clock, Heart, MapPin, Music, Play, Scale, Sparkles } from "lucide-react";
+import { useState, type CSSProperties } from "react";
+import { useReveal } from "@/hooks/useReveal";
 import { WEDDING_CONFIG } from "../weddingConfig";
+import { HandUnderline, Reveal, SectionTitle } from "./Ornaments";
 
-const SCHEDULE_ICONS = {
-  civil: Scale,
-  photo: Camera,
-  toast: Wine,
-  travel: Car,
-  church: Church,
-  break: Coffee,
-  tradition: Heart,
-  party: Music,
-} as const;
+const SCHEDULE_ICONS = { civil: Scale, church: Church, party: Music } as const;
+
+type Step = (typeof WEDDING_CONFIG.schedule)[number];
+
+function ScheduleStep({ item, index }: { item: Step; index: number }) {
+  const ref = useReveal<HTMLLIElement>(0.3);
+  const Icon = SCHEDULE_ICONS[item.icon as keyof typeof SCHEDULE_ICONS] ?? Heart;
+  const tilt = ["md:-rotate-[0.6deg]", "md:rotate-[0.5deg]", "md:-rotate-[0.3deg]"][index] ?? "";
+  const offset = ["md:ml-0", "md:ml-14", "md:ml-6"][index] ?? "";
+  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("Paroisse Christ Sauveur Mbangué Douala")}`;
+
+  return (
+    <li ref={ref} className={`reveal relative pl-16 md:pl-20 ${offset}`} style={{ "--delay": `${index * 120}ms` } as CSSProperties}>
+      <span className="step-dot absolute left-0 md:left-2 top-6 w-12 h-12 rounded-full bg-[#2a1d15] ring-2 ring-[#c69a58] flex items-center justify-center text-[#f3dfb2] shadow-lg z-10">
+        <Icon className="w-5 h-5" />
+      </span>
+      <article className={`step-card card-luxury rounded-[1.6rem] p-6 md:p-7 ${tilt}`}>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="font-serif-luxury text-3xl md:text-4xl font-bold text-[#9a6a12] leading-none">{item.start}</span>
+          <span className="text-xs uppercase tracking-[0.2em] font-semibold text-[#7c6d62]">Étape {index + 1} sur 3</span>
+        </div>
+        <h3 className="font-serif-luxury text-2xl md:text-[1.9rem] font-semibold text-[#2d241e] mt-2 leading-tight">{item.title}</h3>
+        <p className="text-[15px] text-[#4a3b30] leading-relaxed mt-2">{item.description}</p>
+        <p className="mt-4 pt-4 border-t border-dashed border-[#e1cfb5] flex items-start gap-2 text-sm font-medium text-[#5a4632]">
+          <MapPin className="w-4 h-4 mt-0.5 text-[#9d7537] shrink-0" />
+          <span>{item.location}</span>
+        </p>
+        {item.confirmed ? (
+          <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#855f24] underline decoration-[#c69a58]/50 underline-offset-4 hover:decoration-[#855f24]">
+            Ouvrir dans Google Maps
+          </a>
+        ) : (
+          <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#f4ede1] px-3 py-1 text-xs font-semibold text-[#855f24]">
+            <Clock className="w-3.5 h-3.5" /> Lieu à venir, on vous tient au courant
+          </span>
+        )}
+      </article>
+    </li>
+  );
+}
 
 export function ScheduleAndDetailsSection() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   return (
-    <div className="space-y-24 py-16">
-      {/* Section Histoire d'Amour avec portraits préservés */}
+    <div className="space-y-28 py-20">
+      {/* Notre histoire, façon album photo */}
       <section className="max-w-6xl mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="font-script text-3xl md:text-4xl text-[#9d7537]">Deux âmes sœurs</p>
-          <h2 className="font-serif-luxury text-2xl md:text-4xl font-bold tracking-wide text-[#2d241e] mt-1 mb-4">
-            Notre Histoire d'Amour
-          </h2>
-          <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            {WEDDING_CONFIG.story}
-          </p>
-        </div>
+        <SectionTitle kicker="Il était une fois…" title="Notre histoire">
+          <p>{WEDDING_CONFIG.story}</p>
+        </SectionTitle>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
-          {/* Portrait Michelle */}
-          <div className="card-luxury p-6 rounded-3xl text-center group hover:border-[#c69a58] transition-all">
-            <div className="w-52 h-64 mx-auto rounded-2xl overflow-hidden border-2 border-[#ebdcc8] shadow-md mb-4 bg-muted relative">
-              <img
-                src={WEDDING_CONFIG.assets.bridePortrait}
-                alt="Michelle - La Mariée"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            <span className="text-xs uppercase tracking-widest text-[#9d7537] font-semibold">
-              La Mariée
-            </span>
-            <h3 className="font-serif-luxury text-2xl font-bold text-[#2d241e] mt-1">
-              {WEDDING_CONFIG.bride}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-2 max-w-xs mx-auto italic">
-              « Dans son regard, j'ai trouvé la sérénité et le foyer où mon cœur désire habiter à jamais. »
-            </p>
-          </div>
-
-          {/* Portrait Marcing */}
-          <div className="card-luxury p-6 rounded-3xl text-center group hover:border-[#c69a58] transition-all">
-            <div className="w-52 h-64 mx-auto rounded-2xl overflow-hidden border-2 border-[#ebdcc8] shadow-md mb-4 bg-muted relative">
-              <img
-                src={WEDDING_CONFIG.assets.groomPortrait}
-                alt="Marcing - Le Marié"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            <span className="text-xs uppercase tracking-widest text-[#9d7537] font-semibold">
-              Le Marié
-            </span>
-            <h3 className="font-serif-luxury text-2xl font-bold text-[#2d241e] mt-1">
-              {WEDDING_CONFIG.groom}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-2 max-w-xs mx-auto italic">
-              « Elle est ma boussole, ma plus belle prière exaucée et la complice de tous mes lendemains. »
-            </p>
-          </div>
-        </div>
-
-        {/* Citation romantique centrale */}
-        <div className="mt-14 card-luxury max-w-3xl mx-auto p-8 rounded-3xl text-center border-[#c69a58]/40 shadow-sm">
-          <Heart className="w-6 h-6 mx-auto text-[#9d7537] fill-[#c69a58]/20 mb-3" />
-          <blockquote className="font-serif-luxury text-lg md:text-xl font-medium text-[#855f24] italic mb-2">
-            {WEDDING_CONFIG.quote}
-          </blockquote>
-          <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-            — {WEDDING_CONFIG.quoteAuthor}
-          </span>
-        </div>
-      </section>
-
-      {/* Section Quand et Où — Programme avec belles illustrations professionnelles */}
-      <section id="programme" className="max-w-6xl mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="font-script text-3xl md:text-4xl text-[#9d7537]">Moments précieux</p>
-          <h2 className="font-serif-luxury text-2xl md:text-4xl font-bold tracking-wide text-[#2d241e] mt-1 mb-4">
-            Quand & Où ?
-          </h2>
-          <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            Notre grand jour se déroulera à Bandjoun, entourés de nos familles et de nos proches : mariage civil à la mairie de Pète-Bandjoun, vin d'honneur à la petite salle de la paroisse de Mboa, puis messe et célébration traditionnelle à notre domicile de Nlem, à côté de la Mission protestante. Depuis le Centre climatique, prenez une moto et demandez la Mission protestante de Nlem : la maison se trouve juste à côté.
-          </p>
-        </div>
-
-        {/* Cadre paysager de Bandjoun */}
-        <div className="relative rounded-3xl overflow-hidden mb-12 shadow-lg border border-[#ebdcc8] max-h-72">
-          <img
-            src={WEDDING_CONFIG.assets.bandjounLandscape}
-            alt="Paysage de l'Ouest Cameroun - Bandjoun"
-            loading="lazy"
-            decoding="async"
-            className="w-full h-72 object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 md:p-10 text-white">
-            <span className="inline-flex items-center gap-1.5 text-xs tracking-wider uppercase font-semibold text-[#f8eedd]">
-              <MapPin className="w-3.5 h-3.5" /> Bandjoun, Région de l'Ouest Cameroun
-            </span>
-            <h3 className="font-serif-luxury text-2xl md:text-3xl font-bold mt-1">
-              Terre de traditions, de bénédictions et de joie
-            </h3>
-          </div>
-        </div>
-
-        {/* Programme de la journée */}
-        <div className="text-center mb-10">
-          <p className="font-script text-3xl md:text-4xl text-[#9d7537]">Le déroulé de la journée</p>
-          <h3 className="font-serif-luxury text-xl md:text-3xl font-bold tracking-wide text-[#2d241e] mt-1">
-            Programme du {WEDDING_CONFIG.dateString}
-          </h3>
-        </div>
-
-        <ol className="schedule-timeline relative max-w-3xl mx-auto">
-          {WEDDING_CONFIG.schedule.map((item, idx) => {
-            const Icon = SCHEDULE_ICONS[item.icon as keyof typeof SCHEDULE_ICONS] ?? Heart;
-            return (
-              <li key={idx} className="schedule-item relative pl-16 md:pl-0 pb-8 last:pb-0">
-                <div className="schedule-dot absolute left-0 md:left-1/2 md:-translate-x-1/2 top-0 w-12 h-12 rounded-full gold-gradient flex items-center justify-center text-white shadow-lg ring-4 ring-[#faf7f2] z-10">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div className={`md:w-1/2 ${idx % 2 === 0 ? "md:pr-14 md:text-right" : "md:ml-auto md:pl-14"}`}>
-                  <div className="card-luxury rounded-2xl p-5 hover:border-[#c69a58] hover:-translate-y-0.5 hover:shadow-xl transition-all">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4ede1] text-[#855f24] text-xs font-bold tracking-wider mb-2">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{item.end ? `${item.start} – ${item.end}` : `Dès ${item.start}`}</span>
-                    </div>
-                    <h4 className="font-serif-luxury text-base md:text-lg font-bold text-[#2d241e] leading-snug">
-                      {item.title}
-                    </h4>
-                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mt-1.5">
-                      {item.description}
-                    </p>
-                    <p className={`mt-3 pt-3 border-t border-[#ebdcc8] flex items-center gap-1.5 text-xs font-medium text-[#5a4632] ${idx % 2 === 0 ? "md:justify-end" : ""}`}>
-                      <MapPin className="w-3.5 h-3.5 text-[#9d7537] shrink-0" />
-                      <span>{item.location}</span>
-                    </p>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      {/* Section Vidéo d'Ambiance */}
-      <section className="max-w-4xl mx-auto px-4">
-        <div className="card-luxury p-6 md:p-10 rounded-3xl text-center border-[#c69a58]/40 shadow-xl overflow-hidden">
-          <p className="font-script text-3xl md:text-4xl text-[#9d7537] mb-1">
-            Les doux souvenirs
-          </p>
-          <h2 className="font-serif-luxury text-2xl md:text-3xl font-bold text-[#2d241e] mb-4">
-            Notre Amour en Mouvement
-          </h2>
-          <p className="text-muted-foreground text-xs md:text-sm max-w-lg mx-auto mb-8">
-            Revivez avec nous les prémices et les sourires complices qui nous mènent tout droit vers notre engagement sacré.
-          </p>
-
-          <div className="relative max-w-sm mx-auto rounded-2xl overflow-hidden shadow-2xl border-2 border-[#c69a58]/40 bg-black aspect-[9/16]">
-            {!isVideoPlaying ? (
-              <div className="relative w-full h-full">
-                <img
-                  src={WEDDING_CONFIG.assets.videoPoster}
-                  alt="Aperçu vidéo du mariage"
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsVideoPlaying(true)}
-                  className="absolute inset-0 m-auto w-16 h-16 rounded-full gold-gradient flex items-center justify-center text-white shadow-xl hover:scale-110 active:scale-95 transition-all cursor-pointer"
-                  aria-label="Lire la vidéo"
-                >
-                  <Play className="w-7 h-7 fill-white translate-x-0.5" />
-                </button>
-                <div className="absolute bottom-3 left-0 right-0 text-center text-white text-xs drop-shadow bg-gradient-to-t from-black/80 to-transparent py-2">
-                  Cliquez pour visionner la vidéo avec son
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-14 sm:gap-8 max-w-3xl mx-auto items-start">
+          <Reveal className="flex flex-col items-center">
+            <figure className="polaroid w-60 md:w-64 -rotate-3">
+              <span className="tape" aria-hidden="true" />
+              <div className="film-grain aspect-[4/5] overflow-hidden bg-[#efe5d6]">
+                <img src={WEDDING_CONFIG.assets.bridePortrait} alt="Michelle, la mariée" loading="lazy" decoding="async" className="film w-full h-full object-cover object-[50%_20%]" />
               </div>
-            ) : (
-              <video
-                src={WEDDING_CONFIG.assets.videoUrl}
-                controls
-                autoPlay
-                preload="metadata"
-                className="w-full h-full object-cover"
-              />
-            )}
+              <figcaption>Michelle</figcaption>
+            </figure>
+            <p className="font-serif-luxury italic text-lg text-[#4a3b30] text-center max-w-xs mt-6 leading-snug">{WEDDING_CONFIG.brideWords}</p>
+          </Reveal>
+          <Reveal delay={150} className="flex flex-col items-center sm:mt-16">
+            <figure className="polaroid w-60 md:w-64 rotate-2">
+              <span className="tape" aria-hidden="true" />
+              <div className="film-grain aspect-[4/5] overflow-hidden bg-[#efe5d6]">
+                <img src={WEDDING_CONFIG.assets.groomPortrait} alt="Marcing, le marié" loading="lazy" decoding="async" className="film w-full h-full object-cover object-[50%_20%]" />
+              </div>
+              <figcaption>Marcing</figcaption>
+            </figure>
+            <p className="font-serif-luxury italic text-lg text-[#4a3b30] text-center max-w-xs mt-6 leading-snug">{WEDDING_CONFIG.groomWords}</p>
+          </Reveal>
+        </div>
+
+        <Reveal className="mt-16 max-w-2xl mx-auto text-center">
+          <Heart className="w-6 h-6 mx-auto text-[#9d7537] fill-[#c69a58]/30 mb-3" />
+          <blockquote className="font-serif-luxury text-2xl md:text-3xl italic font-medium text-[#2d241e] leading-snug">{WEDDING_CONFIG.quote}</blockquote>
+          <span className="block mt-2 text-xs uppercase tracking-[0.25em] text-[#7c6d62] font-semibold">— {WEDDING_CONFIG.quoteAuthor}</span>
+        </Reveal>
+      </section>
+
+      {/* Le grand jour : trois rendez-vous */}
+      <section id="programme" className="max-w-5xl mx-auto px-4 scroll-mt-20">
+        <SectionTitle kicker="Le grand jour" title={<>Trois moments, <span className="italic">un seul oui</span></>}>
+          <p>
+            Le {WEDDING_CONFIG.dateLong.toLowerCase()}, à Douala. Nous serions profondément heureux de vous avoir à nos
+            côtés pour chacun de ces moments.
+          </p>
+        </SectionTitle>
+
+        <div className="grid gap-12 lg:grid-cols-[1.25fr_0.75fr] lg:items-start">
+          <ol className="relative space-y-8" aria-label="Programme de la journée">
+            <span className="absolute left-6 md:left-8 top-8 bottom-8 w-px bg-gradient-to-b from-[#c69a58]/10 via-[#c69a58] to-[#c69a58]/10" aria-hidden="true" />
+            {WEDDING_CONFIG.schedule.map((item, idx) => (
+              <ScheduleStep key={item.start} item={item} index={idx} />
+            ))}
+          </ol>
+
+          <div className="space-y-6 lg:sticky lg:top-24">
+            <Reveal className="rounded-[1.6rem] bg-[#2a1d15] text-[#f6ead6] p-6 md:p-7 shadow-xl relative overflow-hidden">
+              <span className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-[#c69a58]/20 blur-2xl" aria-hidden="true" />
+              <p className="text-xs uppercase tracking-[0.25em] font-semibold text-[#e2c27f] flex items-center gap-2"><Church className="w-4 h-4" /> Pour trouver l'église</p>
+              <p className="font-serif-luxury text-2xl font-semibold mt-3 leading-snug">{WEDDING_CONFIG.locationName}</p>
+              <p className="mt-1 text-sm text-[#e8dccb]">Mbangué, Douala</p>
+              <div className="mt-5 flex items-start gap-3 rounded-2xl bg-white/5 border border-[#c69a58]/30 p-4">
+                <svg viewBox="0 0 32 28" className="mt-0.5 w-8 h-7 shrink-0" aria-hidden="true">
+                  <path d="M16 2 2 13h4v13h20V13h4z" fill="#f6ead6" opacity=".9" />
+                  <path d="M16 1 0 14h5L16 5l11 9h5z" fill="#c0392b" />
+                  <path d="M14 26v-6h4v6" fill="#2a1d15" />
+                  <path d="M16 0v4M14.5 1.5h3" stroke="#f6ead6" strokeWidth="1.2" />
+                </svg>
+                <p className="text-[15px] leading-relaxed">{WEDDING_CONFIG.directions}</p>
+              </div>
+              <p className="font-script text-3xl text-[#e2c27f] mt-4">on vous y attend à 15 h</p>
+            </Reveal>
+            <Reveal delay={120} className="card-luxury rounded-[1.6rem] p-6 text-[15px] text-[#4a3b30] leading-relaxed">
+              <p className="flex items-start gap-2"><Sparkles className="w-4 h-4 mt-1 text-[#9d7537] shrink-0" /> {WEDDING_CONFIG.placesNote}</p>
+            </Reveal>
           </div>
+        </div>
+      </section>
+
+      {/* Vidéo : chargée seulement après le clic */}
+      <section className="px-4">
+        <div className="max-w-5xl mx-auto rounded-[2rem] bg-[#2a1d15] text-[#f6ead6] px-6 py-14 md:p-14 grid md:grid-cols-2 gap-10 items-center shadow-2xl">
+          <Reveal className="text-center md:text-left">
+            <p className="font-script text-3xl md:text-4xl text-[#e2c27f]">Nos petits moments</p>
+            <h2 className="font-serif-luxury text-3xl md:text-4xl font-semibold mt-1 text-white">Un peu de nous, en images</h2>
+            <HandUnderline className="md:!ml-0" />
+            <p className="mt-4 text-[15px] leading-relaxed text-[#e8dccb]">
+              Des fous rires, des selfies, des promesses… Quelques secondes de notre histoire, pour vous donner envie d'en écrire la suite avec nous.
+            </p>
+          </Reveal>
+          <Reveal delay={120} className="mx-auto w-full max-w-[300px]">
+            <div className="relative rounded-[1.8rem] overflow-hidden shadow-2xl ring-2 ring-[#c69a58] bg-black aspect-[9/16]">
+              {!isVideoPlaying ? (
+                <button type="button" onClick={() => setIsVideoPlaying(true)} className="group absolute inset-0 w-full h-full cursor-pointer" aria-label="Lire la vidéo de Michelle et Marcing">
+                  <img src={WEDDING_CONFIG.assets.videoPoster} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <span className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-white/90 text-[#2a1d15] flex items-center justify-center shadow-xl transition-transform duration-300 group-hover:scale-110">
+                    <Play className="w-7 h-7 fill-current translate-x-0.5" />
+                  </span>
+                  <span className="absolute bottom-4 left-0 right-0 text-center text-white text-sm">Appuyez pour regarder (avec le son)</span>
+                </button>
+              ) : (
+                <video src={WEDDING_CONFIG.assets.videoUrl} controls autoPlay playsInline preload="metadata" className="w-full h-full object-cover" />
+              )}
+            </div>
+          </Reveal>
         </div>
       </section>
     </div>

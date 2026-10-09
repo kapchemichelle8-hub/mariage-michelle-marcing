@@ -1,41 +1,76 @@
-import { Copy, Gift, Heart, Phone } from "lucide-react";
+import { Check, Copy, Gift, Heart, Mail, Phone } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
+import { Reveal, SectionTitle } from "./Ornaments";
+
+function CopyRow({ value, label, href, icon }: { value: string; label: string; href: string; icon: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success(`${label} copié`);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copie impossible, vous pouvez le recopier à la main.");
+    }
+  };
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl bg-white border border-[#e1cfb5] px-4 py-3 shadow-sm">
+      <a href={href} className="flex min-w-0 items-center gap-2.5 font-serif-luxury text-lg md:text-xl font-semibold tracking-wide text-[#2d241e] hover:text-[#855f24]">
+        <span className="text-[#9d7537] shrink-0">{icon}</span>
+        <span className="truncate">{value}</span>
+      </a>
+      <button type="button" onClick={copy} className="min-h-[44px] min-w-[44px] shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full border border-[#c69a58] px-3 text-sm font-semibold text-[#855f24] hover:bg-[#f4ede1] transition-colors cursor-pointer" aria-label={`Copier ${label}`}>
+        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+        <span className="hidden sm:inline">{copied ? "Copié" : "Copier"}</span>
+      </button>
+    </div>
+  );
+}
 
 export function GiftsSection() {
-  const copyNumber = async (number: string) => {
-    await navigator.clipboard.writeText(number);
-    toast.success(`Numéro ${number} copié`);
-  };
-
+  const { gifts } = WEDDING_CONFIG;
   return (
-    <section className="py-20 px-4 bg-[#f4ede1] border-y border-[#ebdcc8]/70">
-      <div className="max-w-3xl mx-auto text-center">
-        <div className="gift-ornament flex items-center justify-center gap-2 text-[#9d7537] mb-5" aria-hidden="true">
-          <span>✦</span><span>✦</span><span>✦</span><span>✦</span><span>✦</span>
-        </div>
-        <p className="font-script text-4xl text-[#9d7537]">{WEDDING_CONFIG.gifts.title}</p>
-        <h2 className="font-serif-luxury text-2xl md:text-3xl font-bold text-[#2d241e] mt-2 mb-5">Votre affection est notre plus beau cadeau</h2>
-        <p className="text-sm md:text-base text-[#6f5c4c] leading-relaxed max-w-2xl mx-auto">
-          {WEDDING_CONFIG.gifts.intro}
-        </p>
+    <section id="cadeaux" className="py-24 px-4 bg-[#f4ede1] border-y border-[#ebdcc8]/70 scroll-mt-16">
+      <div className="max-w-4xl mx-auto">
+        <SectionTitle kicker="Avec gratitude" title="Dons & cadeaux">
+          <p>{gifts.intro}</p>
+        </SectionTitle>
 
-        <div className="card-luxury mt-8 rounded-3xl p-6 md:p-8 text-left max-w-xl mx-auto">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-full bg-[#f8eedd] flex items-center justify-center"><Gift className="w-6 h-6 text-[#9d7537]" /></div>
-            <div><p className="text-xs uppercase tracking-widest text-[#9d7537] font-semibold">Contribution mobile</p><p className="font-serif-luxury text-lg font-bold text-[#2d241e]">{WEDDING_CONFIG.gifts.recipient}</p></div>
-          </div>
-          <div className="space-y-3">
-            {WEDDING_CONFIG.gifts.numbers.map((number) => (
-              <div key={number} className="flex items-center justify-between gap-3 rounded-2xl bg-[#faf7f2] border border-[#ebdcc8] px-4 py-3">
-                <a href={`tel:${number}`} className="flex items-center gap-2 font-serif-luxury text-lg font-bold tracking-wider text-[#855f24] hover:underline"><Phone className="w-4 h-4" />{number}</a>
-                <button type="button" onClick={() => copyNumber(number)} className="p-2 rounded-full text-[#9d7537] hover:bg-[#f4ede1] transition-colors cursor-pointer" aria-label={`Copier le numéro ${number}`}><Copy className="w-4 h-4" /></button>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Reveal className="card-luxury rounded-[1.6rem] p-6 md:p-7">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="w-11 h-11 rounded-full bg-[#2a1d15] text-[#f3dfb2] flex items-center justify-center"><Phone className="w-5 h-5" /></span>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#855f24] font-semibold">Au Cameroun · Mobile Money</p>
+                <p className="font-serif-luxury text-xl font-semibold text-[#2d241e]">{gifts.recipient}</p>
               </div>
-            ))}
-          </div>
+            </div>
+            <div className="space-y-3">
+              {gifts.numbers.map((n) => (
+                <CopyRow key={n} value={n} label={`Le numéro ${n}`} href={`tel:${n}`} icon={<Phone className="w-4 h-4" />} />
+              ))}
+            </div>
+          </Reveal>
+
+          <Reveal delay={120} className="card-luxury rounded-[1.6rem] p-6 md:p-7">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="w-11 h-11 rounded-full bg-[#2a1d15] text-[#f3dfb2] flex items-center justify-center"><Gift className="w-5 h-5" /></span>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#855f24] font-semibold">Depuis le Canada · Interac</p>
+                <p className="font-serif-luxury text-xl font-semibold text-[#2d241e]">Virement par courriel</p>
+              </div>
+            </div>
+            <CopyRow value={gifts.interac} label="L'adresse Interac" href={`mailto:${gifts.interac}`} icon={<Mail className="w-4 h-4" />} />
+            <p className="mt-4 text-sm text-[#5a4632] leading-relaxed">Envoyez simplement votre virement Interac à cette adresse. Un petit mot avec votre nom nous fera très plaisir.</p>
+          </Reveal>
         </div>
 
-        <p className="font-script text-2xl text-[#9d7537] mt-8 flex items-center justify-center gap-2"><Heart className="w-4 h-4 fill-[#c69a58]" /> {WEDDING_CONFIG.gifts.closing} <Heart className="w-4 h-4 fill-[#c69a58]" /></p>
+        <Reveal className="text-center mt-10">
+          <p className="font-script text-3xl text-[#9d7537] inline-flex items-center gap-2"><Heart className="w-4 h-4 fill-[#c69a58] text-[#c69a58]" /> {gifts.closing} <Heart className="w-4 h-4 fill-[#c69a58] text-[#c69a58]" /></p>
+        </Reveal>
       </div>
     </section>
   );
