@@ -106,6 +106,21 @@ export const appRouter = router({
     }),
   }),
 
+  reception: router({
+    roster: adminSessionProcedure.query(async () => {
+      const entries = await db.getAllRsvps();
+      return entries.map(({ id, name, ticketCode, guestsCount, attendance, events, side }) => ({
+        id,
+        name,
+        ticketCode,
+        guestsCount,
+        attendance,
+        events,
+        side,
+      }));
+    }),
+  }),
+
   admin: router({
     login: publicProcedure
       .input(z.object({ password: z.string().min(1, "Veuillez entrer le mot de passe") }))

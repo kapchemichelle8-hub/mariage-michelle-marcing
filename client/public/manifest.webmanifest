@@ -1,0 +1,9 @@
+{
+  "name": "Accueil — Michelle & Marcing",
+  "short_name": "Accueil M&M",
+  "start_url": "/accueil",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#2a1d15",
+  "description": "Outil privé de vérification des billets, utilisable hors connexion après synchronisation."
+}
