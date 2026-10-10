@@ -9,7 +9,16 @@ import viteConfig from "../../vite.config";
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    // Le preview Manus expose le serveur Express sur le port 3000.
+    // Sans ces valeurs explicites, Vite annonce parfois localhost:5173
+    // au navigateur, ce qui fait échouer la connexion WebSocket HMR.
+    hmr: {
+      server,
+      host: "0.0.0.0",
+      port: 3000,
+      clientPort: 3000,
+      protocol: "ws" as const,
+    },
     allowedHosts: true as const,
   };
 
