@@ -26,7 +26,7 @@ export const WEDDING_CONFIG = {
   },
   assets: {
     heroCouple: "/manus-storage/heroCouple_natural_66342999.webp",
-    groomPortrait: "/manus-storage/groomPortrait_26f308fc.webp",
+    groomPortrait: "/manus-storage/groomPortrait_clean_31fe7619.webp",
     bridePortrait: "/manus-storage/bridePortrait_3ce3385c.webp",
     presents: "/manus-storage/presents_ca130746.webp",
     handsUnion: "/manus-storage/handsUnion_c4f9e4b6.webp",

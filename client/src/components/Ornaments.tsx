@@ -67,7 +67,7 @@ export function HeartClipDefs() {
 export function HeartPortrait({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
   return (
     <figure className={`heart-frame ${className}`} tabIndex={0}>
-      <div className="heart-clip film film-grain">
+      <div className="heart-clip">
         <img src={src} alt={alt} decoding="async" />
       </div>
       <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="heart-outline" aria-hidden="true">
