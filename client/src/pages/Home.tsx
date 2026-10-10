@@ -40,24 +40,35 @@ export default function Home() {
     <div className="paper-grain min-h-screen bg-[#faf7f2] flex flex-col selection:bg-[#c69a58]/30">
       <HeartClipDefs />
       <ScrollProgress />
-      <header className="sticky top-0 z-40 bg-[#faf7f2]/92 backdrop-blur border-b border-[#ebdcc8]/60 px-4 py-3">
+      <div className="bg-[#241a14] text-[#e8dccb] text-[11px] py-1.5 px-4 border-b border-[#3d2e23]">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <span className="text-[#c69a58] font-medium hidden sm:inline">Organisation du mariage</span>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <Link href="/admin" className="hover:text-white transition-colors flex items-center gap-1 font-medium">
+              <LockKeyhole className="w-3 h-3 text-[#dcb46e]" /> Espace Mariés
+            </Link>
+            <span className="text-white/20">|</span>
+            <Link href="/accueil" className="text-[#f7ead4] hover:underline transition-colors flex items-center gap-1 font-semibold">
+              <LockKeyhole className="w-3 h-3 text-[#e2c27f]" /> Accès équipe d'accueil
+            </Link>
+          </div>
+        </div>
+      </div>
+      <header className="sticky top-0 z-40 bg-[#faf7f2]/92 backdrop-blur border-b border-[#ebdcc8]/60 px-4 py-3">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
             <span className="font-script text-2xl md:text-3xl text-[#9d7537] group-hover:scale-105 transition-transform whitespace-nowrap">
               M <span className="text-[#c69a58]">&amp;</span> M
             </span>
           </Link>
-          <nav className="flex items-center gap-3 md:gap-6 text-xs md:text-sm font-medium">
+          <nav className="flex items-center gap-2 md:gap-5 text-xs md:text-sm font-medium">
             <a href="#programme" className="text-[#5a4632] hover:text-[#9d7537] transition-colors hidden sm:inline-block">Le programme</a>
             <a href="#cadeaux" className="text-[#5a4632] hover:text-[#9d7537] transition-colors hidden md:inline-block">Dons</a>
-            <button type="button" onClick={scrollToRsvp} className="min-h-[40px] px-4 py-2 rounded-full gold-gradient text-white font-semibold text-xs md:text-sm shadow-sm hover:brightness-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5">
+            <button type="button" onClick={scrollToRsvp} className="min-h-[36px] px-3.5 py-1.5 rounded-full gold-gradient text-white font-semibold text-xs shadow-sm hover:brightness-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1">
               <UserCheck className="w-3.5 h-3.5" /><span>Je réponds</span>
             </button>
-            <Link href="/admin" className="text-xs text-[#7c6d62] hover:text-[#2d241e] border-l border-[#ebdcc8] pl-3 flex items-center gap-1.5" aria-label="Espace des mariés">
-              <LockKeyhole className="w-3.5 h-3.5" /><span className="hidden sm:inline">Espace Mariés</span>
-            </Link>
-            <Link href="/accueil" className="text-xs text-[#7c6d62] hover:text-[#2d241e] border-l border-[#ebdcc8] pl-3 flex items-center gap-1.5" aria-label="Espace Accueil">
-              <LockKeyhole className="w-3.5 h-3.5" /><span className="hidden md:inline">Espace Accueil</span>
+            <Link href="/accueil" className="min-h-[36px] px-3.5 py-1.5 rounded-full bg-[#f4ede1] border border-[#c69a58] text-[#855f24] hover:bg-[#ebdcc8] font-semibold text-xs transition-all flex items-center gap-1 shadow-xs" aria-label="Accès équipe d'accueil">
+              <LockKeyhole className="w-3.5 h-3.5 text-[#9d7537]" /><span>Équipe accueil</span>
             </Link>
           </nav>
         </div>
@@ -124,8 +135,8 @@ export default function Home() {
             <Link href="/admin" className="hover:text-[#d8ab66] transition-colors flex items-center gap-1.5">
               <LockKeyhole className="w-3.5 h-3.5" /> Accès réservé aux mariés
             </Link>
-            <Link href="/accueil" className="hover:text-[#d8ab66] transition-colors flex items-center gap-1.5">
-              <LockKeyhole className="w-3.5 h-3.5" /> Accès équipe d’accueil
+            <Link href="/accueil" className="text-[#f7ead4] bg-white/10 border border-[#c69a58]/60 rounded-full px-4 py-2 hover:bg-white/20 transition-colors flex items-center gap-1.5 font-semibold shadow-sm">
+              <LockKeyhole className="w-4 h-4 text-[#e2c27f]" /> Accès équipe d’accueil
             </Link>
           </div>
         </div>

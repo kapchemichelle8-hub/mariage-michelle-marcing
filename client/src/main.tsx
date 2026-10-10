@@ -82,8 +82,13 @@ createRoot(document.getElementById("root")!).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Le site reste utilisable normalement si le navigateur refuse le cache local.
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister();
+      }
     });
+    if ("caches" in window) {
+      caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name))));
+    }
   });
 }
