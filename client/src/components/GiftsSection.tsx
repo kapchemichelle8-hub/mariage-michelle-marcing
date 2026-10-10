@@ -18,9 +18,9 @@ function CopyRow({ value, label, href, icon }: { value: string; label: string; h
   };
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl bg-white border border-[#e1cfb5] px-4 py-3 shadow-sm">
-      <a href={href} className="flex min-w-0 items-center gap-2.5 font-serif-luxury text-lg md:text-xl font-semibold tracking-wide text-[#2d241e] hover:text-[#855f24]">
+      <a href={href} className="flex min-w-0 items-center gap-2.5 text-[#2d241e] hover:text-[#855f24]">
         <span className="text-[#9d7537] shrink-0">{icon}</span>
-        <span className="truncate">{value}</span>
+        <span className="font-sans-clean font-mono text-xl md:text-2xl font-bold tracking-[0.08em] whitespace-nowrap">{value}</span>
       </a>
       <button type="button" onClick={copy} className="min-h-[44px] min-w-[44px] shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full border border-[#c69a58] px-3 text-sm font-semibold text-[#855f24] hover:bg-[#f4ede1] transition-colors cursor-pointer" aria-label={`Copier ${label}`}>
         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -35,7 +35,7 @@ export function GiftsSection() {
   return (
     <section id="cadeaux" className="py-24 px-4 bg-[#f4ede1] border-y border-[#ebdcc8]/70 scroll-mt-16">
       <div className="max-w-4xl mx-auto">
-        <SectionTitle kicker="Avec gratitude" title="Dons & cadeaux">
+        <SectionTitle kicker="Avec gratitude" title={gifts.title}>
           <p>{gifts.intro}</p>
         </SectionTitle>
 
@@ -44,14 +44,12 @@ export function GiftsSection() {
             <div className="flex items-center gap-3 mb-5">
               <span className="w-11 h-11 rounded-full bg-[#2a1d15] text-[#f3dfb2] flex items-center justify-center"><Phone className="w-5 h-5" /></span>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#855f24] font-semibold">Au Cameroun · Mobile Money</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#855f24] font-semibold">Transfert d’argent · Cameroun</p>
                 <p className="font-serif-luxury text-xl font-semibold text-[#2d241e]">{gifts.recipient}</p>
               </div>
             </div>
             <div className="space-y-3">
-              {gifts.numbers.map((n) => (
-                <CopyRow key={n} value={n} label={`Le numéro ${n}`} href={`tel:${n}`} icon={<Phone className="w-4 h-4" />} />
-              ))}
+              {gifts.numbers.map((n) => <CopyRow key={n} value={n} label={`Le numéro ${n}`} href={`tel:${n}`} icon={<Phone className="w-4 h-4" />} />)}
             </div>
           </Reveal>
 
@@ -59,12 +57,11 @@ export function GiftsSection() {
             <div className="flex items-center gap-3 mb-5">
               <span className="w-11 h-11 rounded-full bg-[#2a1d15] text-[#f3dfb2] flex items-center justify-center"><Gift className="w-5 h-5" /></span>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#855f24] font-semibold">Depuis le Canada · Interac</p>
-                <p className="font-serif-luxury text-xl font-semibold text-[#2d241e]">Virement par courriel</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#855f24] font-semibold">Virement Interac</p>
+                <p className="font-serif-luxury text-xl font-semibold text-[#2d241e]">Adresse courriel</p>
               </div>
             </div>
             <CopyRow value={gifts.interac} label="L'adresse Interac" href={`mailto:${gifts.interac}`} icon={<Mail className="w-4 h-4" />} />
-            <p className="mt-4 text-sm text-[#5a4632] leading-relaxed">Envoyez simplement votre virement Interac à cette adresse. Un petit mot avec votre nom nous fera très plaisir.</p>
           </Reveal>
         </div>
 

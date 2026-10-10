@@ -76,6 +76,27 @@ export async function getUserByOpenId(openId: string) {
   return result[0];
 }
 
+/**
+ * Les anciens billets gardent leurs codes historiques. Les nouvelles réponses
+ * reçoivent une référence lisible de type 026, 027, 028…
+ */
+export async function getNextSequentialTicketCode() {
+  const db = await getDb();
+  if (!db) throw new Error("Base de données indisponible");
+  const rows = await db.select({ ticketCode: rsvps.ticketCode }).from(rsvps);
+  const used = new Set(rows.map((row) => row.ticketCode));
+  let next = rows.length + 1;
+  for (const code of Array.from(used)) {
+    if (/^\d{3,}$/.test(code)) next = Math.max(next, Number(code) + 1);
+  }
+  let candidate = String(next).padStart(3, "0");
+  while (used.has(candidate)) {
+    next += 1;
+    candidate = String(next).padStart(3, "0");
+  }
+  return candidate;
+}
+
 export async function createRsvp(data: InsertRsvp) {
   const db = await getDb();
   if (!db) throw new Error("Base de données indisponible");

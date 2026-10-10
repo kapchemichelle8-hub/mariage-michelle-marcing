@@ -30,7 +30,7 @@ describe("wedding.submitRsvp", () => {
 
     expect(result.success).toBe(true);
     expect(result.attendance).toBe("yes");
-    expect(result.ticketCode).toMatch(/^MM-[A-Z0-9]{6}$/);
+    expect(result.ticketCode).toMatch(/^\d{3,}$/);
 
     try {
       const ticket = await caller.wedding.getTicket({ code: result.ticketCode });
