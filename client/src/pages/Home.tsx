@@ -56,6 +56,9 @@ export default function Home() {
             <Link href="/admin" className="text-xs text-[#7c6d62] hover:text-[#2d241e] border-l border-[#ebdcc8] pl-3 flex items-center gap-1.5" aria-label="Espace des mariés">
               <LockKeyhole className="w-3.5 h-3.5" /><span className="hidden sm:inline">Espace Mariés</span>
             </Link>
+            <Link href="/accueil" className="text-xs text-[#7c6d62] hover:text-[#2d241e] border-l border-[#ebdcc8] pl-3 flex items-center gap-1.5" aria-label="Espace Accueil">
+              <LockKeyhole className="w-3.5 h-3.5" /><span className="hidden md:inline">Espace Accueil</span>
+            </Link>
           </nav>
         </div>
       </header>
@@ -117,9 +120,12 @@ export default function Home() {
           <p className="font-serif-luxury italic text-lg text-[#e8dccb] max-w-lg mx-auto">
             Merci de porter notre union dans vos prières et dans vos cœurs. Nous nous réjouissons infiniment de vivre cette journée bénie en votre précieuse compagnie.
           </p>
-          <div className="pt-6 border-t border-white/10 flex items-center justify-center gap-4 text-xs text-[#b9a993]">
+          <div className="pt-6 border-t border-white/10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-[#b9a993]">
             <Link href="/admin" className="hover:text-[#d8ab66] transition-colors flex items-center gap-1.5">
               <LockKeyhole className="w-3.5 h-3.5" /> Accès réservé aux mariés
+            </Link>
+            <Link href="/accueil" className="hover:text-[#d8ab66] transition-colors flex items-center gap-1.5">
+              <LockKeyhole className="w-3.5 h-3.5" /> Accès équipe d’accueil
             </Link>
           </div>
         </div>
