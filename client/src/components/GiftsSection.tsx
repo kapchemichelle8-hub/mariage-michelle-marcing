@@ -6,6 +6,7 @@ import { Reveal, SectionTitle } from "./Ornaments";
 
 function CopyRow({ value, label, href, icon }: { value: string; label: string; href: string; icon: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
+  const isEmail = value.includes("@");
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value);
@@ -17,14 +18,14 @@ function CopyRow({ value, label, href, icon }: { value: string; label: string; h
     }
   };
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-white border border-[#e1cfb5] px-4 py-3 shadow-sm">
-      <a href={href} className="flex min-w-0 items-center gap-2.5 text-[#2d241e] hover:text-[#855f24]">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 rounded-2xl bg-white border border-[#e1cfb5] px-3.5 py-3 shadow-sm">
+      <a href={href} className="flex min-w-0 flex-1 items-center justify-center sm:justify-start gap-2.5 text-[#2d241e] hover:text-[#855f24] text-center sm:text-left">
         <span className="text-[#9d7537] shrink-0">{icon}</span>
-        <span className="font-sans-clean font-mono text-xl md:text-2xl font-bold tracking-[0.08em] whitespace-nowrap">{value}</span>
+        <span className={`font-sans-clean font-mono text-base sm:text-lg md:text-xl font-bold ${isEmail ? "break-all tracking-normal" : "whitespace-nowrap tracking-[0.06em]"}`}>{value}</span>
       </a>
-      <button type="button" onClick={copy} className="min-h-[44px] min-w-[44px] shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full border border-[#c69a58] px-3 text-sm font-semibold text-[#855f24] hover:bg-[#f4ede1] transition-colors cursor-pointer" aria-label={`Copier ${label}`}>
+      <button type="button" onClick={copy} className="min-h-[40px] w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full border border-[#c69a58] px-3 text-xs font-semibold text-[#855f24] hover:bg-[#f4ede1] transition-colors cursor-pointer" aria-label={`Copier ${label}`}>
         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-        <span className="hidden sm:inline">{copied ? "Copié" : "Copier"}</span>
+        <span>{copied ? "Copié" : "Copier"}</span>
       </button>
     </div>
   );
