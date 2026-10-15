@@ -75,21 +75,49 @@ export function findSeatAssignment(name: string, assignments: SeatAssignment[]) 
   );
   if (exact) return exact;
 
-  const partial = assignments.find(assignment => {
-    const candidate = normalizeGuestName(assignment.matchedGuestName);
-    return candidate.length >= 5 && (wanted.includes(candidate) || candidate.includes(wanted));
-  });
-  if (partial) return partial;
+  const ignoredTokens = new Set([
+    "m",
+    "mr",
+    "mme",
+    "tata",
+    "maman",
+    "papa",
+    "epouse",
+    "epoux",
+    "de",
+    "du",
+    "la",
+    "le",
+  ]);
+  const wantedTokens = wanted
+    .split(" ")
+    .filter(token => token.length >= 3 && !ignoredTokens.has(token));
+  if (!wantedTokens.length) return null;
 
-  const wantedTokens = new Set(wanted.split(" ").filter(token => token.length >= 4));
-  return (
-    assignments.find(assignment => {
+  // Le nom peut contenir un prénom supplémentaire (ex. « Kengne ange paola »),
+  // mais on exige au moins deux éléments communs avec le nom du plan. Pour une
+  // saisie très courte, une seule correspondance est autorisée uniquement si
+  // elle mène à une seule table.
+  const candidates = assignments
+    .map(assignment => {
       const candidateTokens = normalizeGuestName(assignment.matchedGuestName)
         .split(" ")
-        .filter(token => token.length >= 4);
-      return candidateTokens.length > 0 && candidateTokens.some(token => wantedTokens.has(token));
-    }) ?? null
-  );
+        .filter(token => token.length >= 3 && !ignoredTokens.has(token));
+      const sharedTokens = wantedTokens.filter(token => candidateTokens.includes(token));
+      const candidateFitsWanted = candidateTokens.every(token => wantedTokens.includes(token));
+      const wantedFitsCandidate = wantedTokens.every(token => candidateTokens.includes(token));
+      const valid =
+        (sharedTokens.length >= 2 && (candidateFitsWanted || wantedFitsCandidate)) ||
+        (wantedTokens.length === 1 && sharedTokens.length === 1);
+      return valid ? { assignment, score: sharedTokens.length } : null;
+    })
+    .filter((candidate): candidate is { assignment: SeatAssignment; score: number } => candidate !== null);
+  if (!candidates.length) return null;
+
+  const bestScore = Math.max(...candidates.map(candidate => candidate.score));
+  const bestCandidates = candidates.filter(candidate => candidate.score === bestScore);
+  const tableNumbers = new Set(bestCandidates.map(candidate => candidate.assignment.tableNumber));
+  return tableNumbers.size === 1 ? bestCandidates[0].assignment : null;
 }
 
 export async function getSeatAssignmentByName(name: string) {

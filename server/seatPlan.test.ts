@@ -15,4 +15,20 @@ describe("seat plan parser", () => {
     expect(findSeatAssignment("tata suzanne alima", assignments)?.tableNumber).toBe("1");
     expect(findSeatAssignment("Tata Suzanne Alima ", assignments)?.tableVirtue).toBe("Amour");
   });
+
+  it("uses the complete name before assigning a table", () => {
+    const assignments = parseSeatPlanCsv(
+      '"2","Sagesse","Paola","Michelle"\n"20","Douceur","Kengne Paola","Marcing"'
+    );
+    expect(findSeatAssignment("Kengne Paola", assignments)?.tableNumber).toBe("20");
+    expect(findSeatAssignment("Kengne ange paola", assignments)?.tableNumber).toBe("20");
+    expect(findSeatAssignment("Paola", assignments)?.tableNumber).toBe("2");
+  });
+
+  it("does not guess when a shortened name points to different tables", () => {
+    const assignments = parseSeatPlanCsv(
+      '"2","Sagesse","Maman Dora","Michelle"\n"20","Douceur","Épouse de Dora","Marcing"'
+    );
+    expect(findSeatAssignment("Dora", assignments)).toBeNull();
+  });
 });
