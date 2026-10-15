@@ -93,16 +93,35 @@ export function findSeatAssignment(name: string, assignments: SeatAssignment[]) 
 
 export async function getSeatAssignmentByName(name: string) {
   try {
+    const assignments = await getCachedSeatPlan();
+    return findSeatAssignment(name, assignments);
+  } catch (error) {
+    console.warn("[SeatPlan] Lecture du plan impossible:", error);
+    return null;
+  }
+}
+
+let cachedAssignments: SeatAssignment[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60 * 1000; // 60 secondes
+
+export async function getCachedSeatPlan(): Promise<SeatAssignment[]> {
+  const now = Date.now();
+  if (cachedAssignments && now - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedAssignments;
+  }
+  try {
     const response = await fetch(SEAT_PLAN_URL, {
       signal: AbortSignal.timeout(8000),
       headers: { Accept: "text/csv" },
     });
     if (!response.ok) throw new Error(`Plan de table indisponible (${response.status})`);
-    const assignments = parseSeatPlanCsv(await response.text());
-    return findSeatAssignment(name, assignments);
+    cachedAssignments = parseSeatPlanCsv(await response.text());
+    cacheTimestamp = now;
+    return cachedAssignments;
   } catch (error) {
-    console.warn("[SeatPlan] Lecture du plan impossible:", error);
-    return null;
+    if (cachedAssignments) return cachedAssignments;
+    throw error;
   }
 }
 

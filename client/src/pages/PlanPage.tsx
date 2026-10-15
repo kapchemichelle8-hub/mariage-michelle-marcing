@@ -5,10 +5,11 @@ import { Link, useRoute } from "wouter";
 export default function PlanPage() {
   const [, params] = useRoute("/plan/:code");
   const code = (params?.code || "").trim();
-  const { data: result, isLoading } = trpc.wedding.getSeatAssignment.useQuery(
+  const { data: ticket, isLoading } = trpc.wedding.getTicket.useQuery(
     { code },
-    { enabled: code.length >= 3, retry: false }
+    { enabled: Boolean(code && code.length >= 3), retry: false }
   );
+  const assignment = ticket?.seatAssignment;
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-[#2d241e] px-4 py-12 flex items-center justify-center">
@@ -23,13 +24,13 @@ export default function PlanPage() {
             <Loader2 className="w-7 h-7 animate-spin mx-auto text-[#9d7537]" />
             <p className="text-sm text-[#7c6d62]">Recherche de votre table…</p>
           </div>
-        ) : result?.assignment ? (
+        ) : assignment ? (
           <div className="mt-9 space-y-5">
             <div className="rounded-3xl bg-[#2a1d15] text-[#f7ead4] px-6 py-8">
               <Armchair className="w-8 h-8 mx-auto text-[#e2c27f]" />
               <p className="mt-4 text-xs uppercase tracking-[0.2em] text-[#e2c27f]">Votre table</p>
-              <p className="mt-1 font-serif-luxury text-4xl font-bold">Table {result.assignment.tableNumber}</p>
-              <p className="mt-2 font-script text-3xl text-[#e2c27f]">{result.assignment.tableVirtue}</p>
+              <p className="mt-1 font-serif-luxury text-4xl font-bold">Table {assignment.tableNumber}</p>
+              <p className="mt-2 font-script text-3xl text-[#e2c27f]">{assignment.tableVirtue}</p>
             </div>
             <p className="flex items-start gap-2 text-left text-sm leading-relaxed text-[#5a4632]">
               <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#9d7537]" />

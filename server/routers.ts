@@ -105,18 +105,12 @@ export const appRouter = router({
             code: "NOT_FOUND",
             message: "Billet introuvable avec ce code d'invitation",
           });
-        return ticket;
-      }),
-
-    getSeatAssignment: publicProcedure
-      .input(z.object({ code: z.string().min(3) }))
-      .query(async ({ input }) => {
-        const ticket = await db.getRsvpByTicketCode(input.code);
-        if (!ticket) throw new TRPCError({ code: "NOT_FOUND", message: "Billet introuvable avec ce code d'invitation" });
+        const assignment = await getSeatAssignmentByName(ticket.name);
         return {
-          ticketCode: ticket.ticketCode,
-          name: ticket.name,
-          assignment: await getSeatAssignmentByName(ticket.name),
+          ...ticket,
+          seatAssignment: assignment
+            ? { tableNumber: assignment.tableNumber, tableVirtue: assignment.tableVirtue }
+            : null,
         };
       }),
 

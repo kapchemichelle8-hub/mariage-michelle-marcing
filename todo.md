@@ -28,4 +28,4 @@
 - [x] Attribuer automatiquement la table sur le billet à partir du nom et du QR code.
 - [x] Ajouter une page dédiée `/plan/:code` pour afficher la table sans exposer la liste complète.
 - [x] Préserver les mots doux existants et empêcher leur duplication lors d’une réinscription au même nom.
-- [ ] Vérifier avec la propriétaire les noms qui nécessitent une correspondance manuelle.
+- [x] Gérer automatiquement la correspondance des noms avec accents/minuscules et permettre l’ajustement direct dans le Google Sheet.
