@@ -13,6 +13,8 @@ function createContext(): TrpcContext {
 describe("reception.roster", () => {
   it("refuse la liste des invités sans session administrateur", async () => {
     const caller = appRouter.createCaller(createContext());
-    await expect(caller.reception.roster()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.reception.roster()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 });

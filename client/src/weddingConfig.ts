@@ -8,17 +8,21 @@ export const WEDDING_CONFIG = {
   locationName: "Paroisse Christ Sauveur de Mbangué",
   city: "Douala, Cameroun",
   directions: "Au carrefour Toiture Rouge, à Mbangué.",
-  placesNote: "Les adresses précises de la mairie et de la soirée vous seront communiquées dès qu’elles seront confirmées.",
+  placesNote:
+    "Les adresses précises de la mairie et de la soirée vous seront communiquées dès qu’elles seront confirmées.",
   rsvpDeadline: "1er décembre 2026",
   quote: "« Que tout ce que vous faites se fasse avec amour. »",
   quoteAuthor: "1 Corinthiens 16:14",
   story:
     "Il y a eu un premier regard, puis une conversation qui ne voulait pas finir. Depuis, chaque jour nous rapproche un peu plus. Aujourd’hui, nous avons envie de dire oui, devant nos familles, devant Dieu et entourés de vous.",
-  brideWords: "« Il a cette façon de me faire rire quand je doute, et de me faire sentir chez moi partout où il est. »",
-  groomWords: "« Elle est ma paix, ma plus belle prière exaucée et la complice de tous mes lendemains. »",
+  brideWords:
+    "« Il a cette façon de me faire rire quand je doute, et de me faire sentir chez moi partout où il est. »",
+  groomWords:
+    "« Elle est ma paix, ma plus belle prière exaucée et la complice de tous mes lendemains. »",
   gifts: {
     title: "Dons et cadeaux",
-    intro: "Vos prières et votre présence à nos côtés sont déjà le plus beau des cadeaux.",
+    intro:
+      "Vos prières et votre présence à nos côtés sont déjà le plus beau des cadeaux.",
     recipient: "Kapche Michelle",
     numbers: ["688915296", "651974889"],
     interac: "kusstella@gmail.com",
@@ -44,7 +48,8 @@ export const WEDDING_CONFIG = {
       end: "",
       title: "Le oui à la mairie",
       location: "Mairie — adresse communiquée bientôt",
-      description: "Devant l’officier d’état civil, entourés de nos témoins et de nos familles, nous échangerons nos consentements.",
+      description:
+        "Devant l’officier d’état civil, entourés de nos témoins et de nos familles, nous échangerons nos consentements.",
       icon: "civil",
       confirmed: false,
     },
@@ -53,8 +58,10 @@ export const WEDDING_CONFIG = {
       start: "15 h 00",
       end: "",
       title: "La messe d’action de grâce",
-      location: "Paroisse Christ Sauveur de Mbangué, au carrefour Toiture Rouge",
-      description: "Nous rendrons grâce à Dieu pour notre union, dans la prière et la joie, avec vous à nos côtés.",
+      location:
+        "Paroisse Christ Sauveur de Mbangué, au carrefour Toiture Rouge",
+      description:
+        "Nous rendrons grâce à Dieu pour notre union, dans la prière et la joie, avec vous à nos côtés.",
       icon: "church",
       confirmed: true,
     },
@@ -64,7 +71,8 @@ export const WEDDING_CONFIG = {
       end: "",
       title: "La soirée",
       location: "Salle de réception — adresse communiquée bientôt",
-      description: "Place à la fête : un bon repas, de la musique, des danses et beaucoup d’amour jusqu’au bout de la nuit.",
+      description:
+        "Place à la fête : un bon repas, de la musique, des danses et beaucoup d’amour jusqu’au bout de la nuit.",
       icon: "party",
       confirmed: false,
     },

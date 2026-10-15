@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
-function createMockContext(cookieHeader = ""): { ctx: TrpcContext; setCookies: string[] } {
+function createMockContext(cookieHeader = ""): {
+  ctx: TrpcContext;
+  setCookies: string[];
+} {
   const setCookies: string[] = [];
 
   const ctx: TrpcContext = {
@@ -29,8 +32,12 @@ describe("admin security & password login", () => {
     const { ctx } = createMockContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.admin.stats()).rejects.toThrow("Mot de passe administrateur requis");
-    await expect(caller.admin.listRsvps()).rejects.toThrow("Mot de passe administrateur requis");
+    await expect(caller.admin.stats()).rejects.toThrow(
+      "Mot de passe administrateur requis"
+    );
+    await expect(caller.admin.listRsvps()).rejects.toThrow(
+      "Mot de passe administrateur requis"
+    );
   });
 
   it("authenticates with the correct shared password and drops a session cookie", async () => {
@@ -39,13 +46,17 @@ describe("admin security & password login", () => {
 
     const loginResult = await caller.admin.login({ password: "mariage2026" });
     expect(loginResult.success).toBe(true);
-    expect(setCookies.some((c) => c.startsWith("wedding_admin_session_v2="))).toBe(true);
+    expect(
+      setCookies.some(c => c.startsWith("wedding_admin_session_v2="))
+    ).toBe(true);
   });
 
   it("does not accept the legacy session cookie", async () => {
     const { ctx } = createMockContext("wedding_admin_session=old-token");
     const caller = appRouter.createCaller(ctx);
     expect((await caller.admin.me()).authenticated).toBe(false);
-    await expect(caller.admin.stats()).rejects.toThrow("Mot de passe administrateur requis");
+    await expect(caller.admin.stats()).rejects.toThrow(
+      "Mot de passe administrateur requis"
+    );
   });
 });
