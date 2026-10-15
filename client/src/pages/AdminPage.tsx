@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
+  AlertTriangle,
   CheckCircle,
   Download,
   KeyRound,
@@ -56,6 +57,9 @@ export default function AdminPage() {
   });
   const stats = statsQuery.data;
   const rsvps = listQuery.data;
+  const unassignedConfirmed = (rsvps || []).filter(
+    entry => entry.attendance === "yes" && !entry.tableNumber
+  );
 
   const loginMutation = trpc.admin.login.useMutation({
     onSuccess: async () => {
@@ -116,6 +120,7 @@ export default function AdminPage() {
       "Nom",
       "Invité de",
       "Moments choisis",
+      "Table",
       "Présence",
       "Nombre de personnes",
       "Message",
@@ -126,6 +131,7 @@ export default function AdminPage() {
       `"${r.name.replace(/"/g, '""')}"`,
       `"${sideLabel(r.side)}"`,
       `"${formatEvents(r.events)}"`,
+      `"${r.tableNumber ? `Table ${r.tableNumber} — ${r.tableVirtue || ""}` : "Non attribuée"}"`,
       r.attendance === "yes" ? "Oui" : "Non",
       r.guestsCount,
       `"${(r.message || "").replace(/"/g, '""')}"`,
@@ -336,6 +342,19 @@ export default function AdminPage() {
           />
         </div>
 
+        {unassignedConfirmed.length > 0 && (
+          <section className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-950 shadow-sm">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0 text-amber-700" />
+              <div>
+                <p className="font-semibold">{unassignedConfirmed.length} invité{unassignedConfirmed.length > 1 ? "s" : ""} confirmé{unassignedConfirmed.length > 1 ? "s" : ""} sans table</p>
+                <p className="text-xs mt-1 leading-relaxed">Ajoutez leur nom dans l’onglet « 🪑 Plan de table » du Google Sheet pour actualiser automatiquement leur billet.</p>
+                <p className="text-xs mt-2 font-medium">{unassignedConfirmed.slice(0, 5).map(entry => entry.name).join(" · ")}{unassignedConfirmed.length > 5 ? " · …" : ""}</p>
+              </div>
+            </div>
+          </section>
+        )}
+
         <div className="card-luxury rounded-3xl p-6 border-[#ebdcc8]">
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
             <div className="relative flex-1 max-w-md">
@@ -395,6 +414,7 @@ export default function AdminPage() {
                     <th className="py-3 px-3">Nom de l'invité</th>
                     <th className="py-3 px-3">Invité de</th>
                     <th className="py-3 px-3">Moments</th>
+                    <th className="py-3 px-3">Table</th>
                     <th className="py-3 px-3">Statut</th>
                     <th className="py-3 px-3 text-center">Convives</th>
                     <th className="py-3 px-3">Message</th>
@@ -426,6 +446,9 @@ export default function AdminPage() {
                       </td>
                       <td className="py-3.5 px-3 text-xs text-[#6c4b1a]">
                         {formatEvents(item.events)}
+                      </td>
+                      <td className="py-3.5 px-3 text-xs whitespace-nowrap">
+                        {item.tableNumber ? <span className="font-semibold text-[#855f24]">Table {item.tableNumber} · {item.tableVirtue}</span> : <span className="text-amber-700 font-semibold">À attribuer</span>}
                       </td>
                       <td className="py-3.5 px-3">
                         {item.attendance === "yes" ? (

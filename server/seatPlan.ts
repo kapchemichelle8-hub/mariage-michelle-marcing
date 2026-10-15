@@ -7,6 +7,7 @@ export type SeatAssignment = {
   tableVirtue: string;
   matchedGuestName: string;
   side: string;
+  tableGuests?: string[];
 };
 
 function parseCsvLine(line: string) {
@@ -94,15 +95,27 @@ export function findSeatAssignment(name: string, assignments: SeatAssignment[]) 
 export async function getSeatAssignmentByName(name: string) {
   try {
     const assignments = await getCachedSeatPlan();
-    return findSeatAssignment(name, assignments);
+    const assignment = findSeatAssignment(name, assignments);
+    if (!assignment) return null;
+    return {
+      ...assignment,
+      tableGuests: getTableMembers(assignment.tableNumber, assignments),
+    };
   } catch (error) {
     console.warn("[SeatPlan] Lecture du plan impossible:", error);
     return null;
   }
 }
 
+export function getTableMembers(tableNumber: string, assignments: SeatAssignment[]) {
+  return assignments
+    .filter(assignment => assignment.tableNumber === tableNumber)
+    .map(assignment => assignment.matchedGuestName);
+}
+
 let cachedAssignments: SeatAssignment[] | null = null;
 let cacheTimestamp = 0;
+let pendingSeatPlanRequest: Promise<SeatAssignment[]> | null = null;
 const CACHE_TTL_MS = 60 * 1000; // 60 secondes
 
 export async function getCachedSeatPlan(): Promise<SeatAssignment[]> {
@@ -110,19 +123,25 @@ export async function getCachedSeatPlan(): Promise<SeatAssignment[]> {
   if (cachedAssignments && now - cacheTimestamp < CACHE_TTL_MS) {
     return cachedAssignments;
   }
-  try {
-    const response = await fetch(SEAT_PLAN_URL, {
-      signal: AbortSignal.timeout(8000),
-      headers: { Accept: "text/csv" },
-    });
-    if (!response.ok) throw new Error(`Plan de table indisponible (${response.status})`);
-    cachedAssignments = parseSeatPlanCsv(await response.text());
-    cacheTimestamp = now;
-    return cachedAssignments;
-  } catch (error) {
-    if (cachedAssignments) return cachedAssignments;
-    throw error;
-  }
+  if (pendingSeatPlanRequest) return pendingSeatPlanRequest;
+  pendingSeatPlanRequest = (async () => {
+    try {
+      const response = await fetch(SEAT_PLAN_URL, {
+        signal: AbortSignal.timeout(8000),
+        headers: { Accept: "text/csv" },
+      });
+      if (!response.ok) throw new Error(`Plan de table indisponible (${response.status})`);
+      cachedAssignments = parseSeatPlanCsv(await response.text());
+      cacheTimestamp = Date.now();
+      return cachedAssignments;
+    } catch (error) {
+      if (cachedAssignments) return cachedAssignments;
+      throw error;
+    } finally {
+      pendingSeatPlanRequest = null;
+    }
+  })();
+  return pendingSeatPlanRequest;
 }
 
 export { SEAT_PLAN_URL };

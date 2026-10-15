@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { parse as parseCookie } from "cookie";
 import { z } from "zod";
 import * as db from "./db";
-import { getSeatAssignmentByName } from "./seatPlan";
+import { getSeatAssignmentByName, normalizeGuestName } from "./seatPlan";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
@@ -109,7 +109,13 @@ export const appRouter = router({
         return {
           ...ticket,
           seatAssignment: assignment
-            ? { tableNumber: assignment.tableNumber, tableVirtue: assignment.tableVirtue }
+            ? {
+                tableNumber: assignment.tableNumber,
+                tableVirtue: assignment.tableVirtue,
+                tableGuests: assignment.tableGuests?.filter(
+                  guest => normalizeGuestName(guest) !== normalizeGuestName(ticket.name)
+                ),
+              }
             : null,
         };
       }),
@@ -146,15 +152,20 @@ export const appRouter = router({
   reception: router({
     roster: adminSessionProcedure.query(async () => {
       const entries = await db.getAllRsvps();
-      return entries.map(
-        ({ id, name, ticketCode, guestsCount, attendance, events, side }) => ({
-          id,
-          name,
-          ticketCode,
-          guestsCount,
-          attendance,
-          events,
-          side,
+      return Promise.all(
+        entries.map(async ({ id, name, ticketCode, guestsCount, attendance, events, side }) => {
+          const assignment = await getSeatAssignmentByName(name);
+          return {
+            id,
+            name,
+            ticketCode,
+            guestsCount,
+            attendance,
+            events,
+            side,
+            tableNumber: assignment?.tableNumber ?? null,
+            tableVirtue: assignment?.tableVirtue ?? null,
+          };
         })
       );
     }),
@@ -188,7 +199,19 @@ export const appRouter = router({
     me: publicProcedure.query(({ ctx }) => ({
       authenticated: isAdminSessionValid(ctx.req),
     })),
-    listRsvps: adminSessionProcedure.query(async () => db.getAllRsvps()),
+    listRsvps: adminSessionProcedure.query(async () => {
+      const entries = await db.getAllRsvps();
+      return Promise.all(
+        entries.map(async entry => {
+          const assignment = await getSeatAssignmentByName(entry.name);
+          return {
+            ...entry,
+            tableNumber: assignment?.tableNumber ?? null,
+            tableVirtue: assignment?.tableVirtue ?? null,
+          };
+        })
+      );
+    }),
     stats: adminSessionProcedure.query(async () => db.getPublicWeddingStats()),
     deleteRsvp: adminSessionProcedure
       .input(z.object({ id: z.number().int().positive() }))

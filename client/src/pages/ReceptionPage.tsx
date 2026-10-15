@@ -26,6 +26,8 @@ type RosterEntry = {
   attendance: "yes" | "no";
   events: string | null;
   side: "bride" | "groom" | null;
+  tableNumber: string | null;
+  tableVirtue: string | null;
 };
 
 type CheckIn = { at: string; ticketCode: string };
@@ -122,7 +124,9 @@ export default function ReceptionPage() {
     const needle = query.trim().toLowerCase();
     if (!needle) return roster;
     return roster.filter(entry =>
-      `${entry.name} ${entry.ticketCode}`.toLowerCase().includes(needle)
+      `${entry.name} ${entry.ticketCode} ${entry.tableNumber ?? ""} ${entry.tableVirtue ?? ""}`
+        .toLowerCase()
+        .includes(needle)
     );
   }, [query, roster]);
 
@@ -485,7 +489,10 @@ export default function ReceptionPage() {
                     {entry.events
                       ?.split(",")
                       .map(event => eventLabel[event] || event)
-                      .join(", ") || "—"}
+                      ?.join(", ") || "—"}
+                  </span>
+                  <span className="text-[#855f24] font-medium whitespace-nowrap">
+                    {entry.tableNumber ? `Table ${entry.tableNumber} · ${entry.tableVirtue}` : "Table à attribuer"}
                   </span>
                   <span>
                     {checkins[entry.ticketCode] ? (

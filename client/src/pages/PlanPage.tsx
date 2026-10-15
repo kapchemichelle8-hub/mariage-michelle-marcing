@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Armchair, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, Armchair, Loader2, MapPin, Users } from "lucide-react";
 import { Link, useRoute } from "wouter";
 
 export default function PlanPage() {
@@ -36,6 +36,7 @@ export default function PlanPage() {
               <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#9d7537]" />
               Votre placement sera indiqué par le nom de la table le jour de la réception.
             </p>
+            {ticket?.seatAssignment?.tableGuests?.length ? <div className="rounded-2xl border border-[#e1cfb5] bg-[#fcfaf7] p-4 text-left"><p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#855f24]"><Users className="w-4 h-4" /> Autres convives à votre table</p><ul className="mt-3 space-y-1.5 text-sm text-[#5a4632]">{ticket.seatAssignment.tableGuests.map((guest: string) => <li key={guest} className="break-words">{guest}</li>)}</ul></div> : null}
           </div>
         ) : (
           <div className="mt-9 rounded-2xl bg-[#f4ede1] p-5 text-sm leading-relaxed text-[#5a4632]">

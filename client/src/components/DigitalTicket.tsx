@@ -20,7 +20,7 @@ export interface TicketData {
   side?: "bride" | "groom" | null;
   events?: string | null;
   createdAt?: Date | string;
-  seatAssignment?: { tableNumber: string; tableVirtue: string } | null;
+  seatAssignment?: { tableNumber: string; tableVirtue: string; tableGuests?: string[] } | null;
 }
 
 const EVENT_LABELS: Record<string, { label: string; time: string }> = {
