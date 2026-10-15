@@ -12,7 +12,7 @@ function ScheduleStep({ item, index }: { item: Step; index: number }) {
   const Icon = SCHEDULE_ICONS[item.icon as keyof typeof SCHEDULE_ICONS] ?? Heart;
   const tilt = ["md:-rotate-[0.6deg]", "md:rotate-[0.5deg]", "md:-rotate-[0.3deg]"][index] ?? "";
   const offset = ["md:ml-0", "md:ml-14", "md:ml-6"][index] ?? "";
-  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("Paroisse Christ Sauveur de Mbangué carrefour Toiture Rouge Douala")}`;
+  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.mapQuery ?? item.location)}`;
 
   return (
     <li ref={ref} className={`reveal relative pl-16 md:pl-20 ${offset}`} style={{ "--delay": `${index * 120}ms` } as CSSProperties}>

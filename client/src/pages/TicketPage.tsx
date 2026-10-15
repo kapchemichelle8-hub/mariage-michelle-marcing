@@ -18,6 +18,10 @@ export default function TicketPage() {
       },
     }
   );
+  const { data: seatPlan } = trpc.wedding.getSeatAssignment.useQuery(
+    { code },
+    { enabled: Boolean(ticket), retry: false }
+  );
 
   return (
     <div className="min-h-screen bg-[#faf7f2] py-12 px-4 flex flex-col justify-center items-center">
@@ -58,6 +62,7 @@ export default function TicketPage() {
             side: ticket.side,
             events: (ticket as any).events,
             createdAt: ticket.createdAt,
+            seatAssignment: seatPlan?.assignment,
           }}
         />
       )}

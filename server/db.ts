@@ -2,6 +2,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertRsvp, InsertUser, rsvps, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { normalizeGuestName } from "./seatPlan";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -110,6 +111,12 @@ export async function getRsvpByTicketCode(ticketCode: string) {
   if (!db) return undefined;
   const rows = await db.select().from(rsvps).where(eq(rsvps.ticketCode, ticketCode)).limit(1);
   return rows[0];
+}
+
+export async function hasExistingGuestbookMessage(name: string) {
+  const rows = await getAllRsvps();
+  const wanted = normalizeGuestName(name);
+  return rows.some(row => normalizeGuestName(row.name) === wanted && Boolean(row.message?.trim()));
 }
 
 export async function getAllRsvps() {

@@ -20,3 +20,12 @@
 - [x] Conserver la photo d’entrée et les portraits originaux hors des cœurs.
 - [x] Optimiser les deux images en WebP léger pour mobile.
 - [x] Vérifier le rendu responsive et publier le checkpoint.
+
+## Plan de table — 15 octobre 2026
+
+- [x] Vérifier que le Google Sheet est accessible en lecture publique.
+- [x] Lire l’onglet « 🪑 Plan de table » en lecture seule.
+- [x] Attribuer automatiquement la table sur le billet à partir du nom et du QR code.
+- [x] Ajouter une page dédiée `/plan/:code` pour afficher la table sans exposer la liste complète.
+- [x] Préserver les mots doux existants et empêcher leur duplication lors d’une réinscription au même nom.
+- [ ] Vérifier avec la propriétaire les noms qui nécessitent une correspondance manuelle.

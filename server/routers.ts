@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { parse as parseCookie } from "cookie";
 import { z } from "zod";
 import * as db from "./db";
+import { getSeatAssignmentByName } from "./seatPlan";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
@@ -80,9 +81,24 @@ export const appRouter = router({
         return ticket;
       }),
 
+    getSeatAssignment: publicProcedure
+      .input(z.object({ code: z.string().min(3) }))
+      .query(async ({ input }) => {
+        const ticket = await db.getRsvpByTicketCode(input.code);
+        if (!ticket) throw new TRPCError({ code: "NOT_FOUND", message: "Billet introuvable avec ce code d'invitation" });
+        return {
+          ticketCode: ticket.ticketCode,
+          name: ticket.name,
+          assignment: await getSeatAssignmentByName(ticket.name),
+        };
+      }),
+
     submitRsvp: publicProcedure.input(rsvpInput).mutation(async ({ input }) => {
       const ticketCode = await db.getNextSequentialTicketCode();
       const eventsString = input.attendance === "yes" && input.events ? input.events.join(",") : null;
+      const alreadyHasMessage = input.message
+        ? await db.hasExistingGuestbookMessage(input.name)
+        : false;
 
       const saved = await db.createRsvp({
         name: input.name,
@@ -90,7 +106,7 @@ export const appRouter = router({
         attendance: input.attendance,
         events: eventsString,
         guestsCount: input.attendance === "yes" ? input.guestsCount : 0,
-        message: input.message || null,
+        message: alreadyHasMessage ? null : input.message || null,
         ticketCode,
       });
       return {

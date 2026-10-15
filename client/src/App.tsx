@@ -11,12 +11,14 @@ import Home from "./pages/Home";
 import ReceptionPage from "./pages/ReceptionPage";
 import SimulationPage from "./pages/SimulationPage";
 import TicketPage from "./pages/TicketPage";
+import PlanPage from "./pages/PlanPage";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/billet/:code" component={TicketPage} />
+      <Route path="/plan/:code" component={PlanPage} />
       <Route path="/indisponible" component={DeclinedPage} />
       <Route path="/simulation" component={SimulationPage} />
       <Route path="/admin" component={AdminPage} />
