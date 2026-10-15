@@ -25,21 +25,34 @@ function isAdminSessionValid(req: { headers: { cookie?: string } }) {
 
   const expected = Buffer.from(adminSessionToken());
   const received = Buffer.from(token);
-  return received.length === expected.length && timingSafeEqual(received, expected);
+  return (
+    received.length === expected.length && timingSafeEqual(received, expected)
+  );
 }
 
 function setAdminSession(res: any, req: any) {
-  res.cookie(ADMIN_SESSION_COOKIE, adminSessionToken(), { ...getSessionCookieOptions(req) });
+  res.cookie(ADMIN_SESSION_COOKIE, adminSessionToken(), {
+    ...getSessionCookieOptions(req),
+  });
 }
 
 function clearAdminSession(res: any, req: any) {
-  res.clearCookie(ADMIN_SESSION_COOKIE, { ...getSessionCookieOptions(req), maxAge: 0 });
-  res.clearCookie(LEGACY_ADMIN_SESSION_COOKIE, { ...getSessionCookieOptions(req), maxAge: 0 });
+  res.clearCookie(ADMIN_SESSION_COOKIE, {
+    ...getSessionCookieOptions(req),
+    maxAge: 0,
+  });
+  res.clearCookie(LEGACY_ADMIN_SESSION_COOKIE, {
+    ...getSessionCookieOptions(req),
+    maxAge: 0,
+  });
 }
 
 const adminSessionProcedure = publicProcedure.use(({ ctx, next }) => {
   if (!isAdminSessionValid(ctx.req)) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Mot de passe administrateur requis" });
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Mot de passe administrateur requis",
+    });
   }
   return next({ ctx });
 });
@@ -47,15 +60,25 @@ const adminSessionProcedure = publicProcedure.use(({ ctx, next }) => {
 const rsvpInput = z
   .object({
     name: z.string().trim().min(2, "Veuillez renseigner votre nom complet"),
-    side: z.enum(["bride", "groom"], { message: "Veuillez indiquer si vous êtes invité(e) de la mariée ou du marié" }),
+    side: z.enum(["bride", "groom"], {
+      message:
+        "Veuillez indiquer si vous êtes invité(e) de la mariée ou du marié",
+    }),
     attendance: z.enum(["yes", "no"]),
     events: z.array(z.enum(["civil", "church", "party"])).optional(),
     guestsCount: z.number().int().min(1).max(2).default(1),
     message: z.string().trim().max(1000).optional().or(z.literal("")),
   })
   .superRefine((input, ctx) => {
-    if (input.attendance === "yes" && (!input.events || input.events.length === 0)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["events"], message: "Veuillez sélectionner au moins un moment de la journée." });
+    if (
+      input.attendance === "yes" &&
+      (!input.events || input.events.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["events"],
+        message: "Veuillez sélectionner au moins un moment de la journée.",
+      });
     }
   });
 
@@ -77,7 +100,11 @@ export const appRouter = router({
       .input(z.object({ code: z.string().min(3) }))
       .query(async ({ input }) => {
         const ticket = await db.getRsvpByTicketCode(input.code);
-        if (!ticket) throw new TRPCError({ code: "NOT_FOUND", message: "Billet introuvable avec ce code d'invitation" });
+        if (!ticket)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Billet introuvable avec ce code d'invitation",
+          });
         return ticket;
       }),
 
@@ -125,26 +152,38 @@ export const appRouter = router({
   reception: router({
     roster: adminSessionProcedure.query(async () => {
       const entries = await db.getAllRsvps();
-      return entries.map(({ id, name, ticketCode, guestsCount, attendance, events, side }) => ({
-        id,
-        name,
-        ticketCode,
-        guestsCount,
-        attendance,
-        events,
-        side,
-      }));
+      return entries.map(
+        ({ id, name, ticketCode, guestsCount, attendance, events, side }) => ({
+          id,
+          name,
+          ticketCode,
+          guestsCount,
+          attendance,
+          events,
+          side,
+        })
+      );
     }),
   }),
 
   admin: router({
     login: publicProcedure
-      .input(z.object({ password: z.string().min(1, "Veuillez entrer le mot de passe") }))
+      .input(
+        z.object({
+          password: z.string().min(1, "Veuillez entrer le mot de passe"),
+        })
+      )
       .mutation(({ input, ctx }) => {
         const received = Buffer.from(input.password);
         const expected = Buffer.from(ENV.adminPassword);
-        const isValid = received.length === expected.length && timingSafeEqual(received, expected);
-        if (!isValid) throw new TRPCError({ code: "UNAUTHORIZED", message: "Mot de passe incorrect" });
+        const isValid =
+          received.length === expected.length &&
+          timingSafeEqual(received, expected);
+        if (!isValid)
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Mot de passe incorrect",
+          });
         setAdminSession(ctx.res, ctx.req);
         return { success: true } as const;
       }),
@@ -152,17 +191,23 @@ export const appRouter = router({
       clearAdminSession(ctx.res, ctx.req);
       return { success: true } as const;
     }),
-    me: publicProcedure.query(({ ctx }) => ({ authenticated: isAdminSessionValid(ctx.req) })),
+    me: publicProcedure.query(({ ctx }) => ({
+      authenticated: isAdminSessionValid(ctx.req),
+    })),
     listRsvps: adminSessionProcedure.query(async () => db.getAllRsvps()),
     stats: adminSessionProcedure.query(async () => db.getPublicWeddingStats()),
-    deleteRsvp: adminSessionProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input }) => {
-      await db.deleteRsvp(input.id);
-      return { success: true } as const;
-    }),
-    deleteGuestbookMessage: adminSessionProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input }) => {
-      await db.deleteGuestbookMessage(input.id);
-      return { success: true } as const;
-    }),
+    deleteRsvp: adminSessionProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.deleteRsvp(input.id);
+        return { success: true } as const;
+      }),
+    deleteGuestbookMessage: adminSessionProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.deleteGuestbookMessage(input.id);
+        return { success: true } as const;
+      }),
   }),
 });
 

@@ -12,10 +12,21 @@ interface TimeLeft {
   isReached: boolean;
 }
 
-export function CountdownSection({ standalone = false, autoSimulate = false }: { standalone?: boolean; autoSimulate?: boolean }) {
+export function CountdownSection({
+  standalone = false,
+  autoSimulate = false,
+}: {
+  standalone?: boolean;
+  autoSimulate?: boolean;
+}) {
   const [forceReached, setForceReached] = useState(autoSimulate);
-  const targetDate = useMemo(() => new Date(WEDDING_CONFIG.dateIso).getTime(), []);
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(targetDate));
+  const targetDate = useMemo(
+    () => new Date(WEDDING_CONFIG.dateIso).getTime(),
+    []
+  );
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() =>
+    calculateTimeLeft(targetDate)
+  );
 
   function calculateTimeLeft(target: number): TimeLeft {
     const now = Date.now();
@@ -41,15 +52,30 @@ export function CountdownSection({ standalone = false, autoSimulate = false }: {
     const colors = ["#c69a58", "#e3c28b", "#ffffff", "#ff4757", "#2ed573"];
 
     (function frame() {
-      confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors });
-      confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors });
+      confetti({
+        particleCount: 6,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors,
+      });
+      confetti({
+        particleCount: 6,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors,
+      });
       if (Date.now() < end) requestAnimationFrame(frame);
     })();
   };
 
   useEffect(() => {
     if (forceReached) return;
-    const timer = setInterval(() => setTimeLeft(calculateTimeLeft(targetDate)), 1000);
+    const timer = setInterval(
+      () => setTimeLeft(calculateTimeLeft(targetDate)),
+      1000
+    );
     return () => clearInterval(timer);
   }, [targetDate, forceReached]);
 
@@ -60,7 +86,9 @@ export function CountdownSection({ standalone = false, autoSimulate = false }: {
   const pad = (n: number, size = 2) => String(n).padStart(size, "0");
 
   return (
-    <section className={`py-10 px-4 text-center ${standalone ? "min-h-[560px] flex items-center justify-center" : ""}`}>
+    <section
+      className={`py-10 px-4 text-center ${standalone ? "min-h-[560px] flex items-center justify-center" : ""}`}
+    >
       <div className="max-w-4xl mx-auto">
         {isDDay ? (
           <div className="card-luxury p-8 md:p-10 rounded-3xl max-w-xl mx-auto border-[#c69a58]/50 shadow-2xl animate-fade-in relative">
@@ -68,17 +96,32 @@ export function CountdownSection({ standalone = false, autoSimulate = false }: {
               <Sparkles className="w-4 h-4" /> Nous y sommes enfin !
             </div>
             <div className="relative w-44 h-44 mx-auto mb-5 rounded-full overflow-hidden border-4 border-[#c69a58] shadow-xl">
-              <img src={WEDDING_CONFIG.assets.heroCouple} alt="Michelle et Marcing" className="w-full h-full object-cover" />
+              <img
+                src={WEDDING_CONFIG.assets.heroCouple}
+                alt="Michelle et Marcing"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <h3 className="font-serif-luxury text-2xl font-bold text-[#855f24] mb-2">C’est aujourd’hui !</h3>
+            <h3 className="font-serif-luxury text-2xl font-bold text-[#855f24] mb-2">
+              C’est aujourd’hui !
+            </h3>
             <p className="text-sm text-[#5a4632] leading-relaxed mb-6">
-              Aujourd’hui, entourés de vous tous, Michelle et Marcing se disent oui. Merci d’être là.
+              Aujourd’hui, entourés de vous tous, Michelle et Marcing se disent
+              oui. Merci d’être là.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <button type="button" onClick={triggerCelebration} className="px-6 py-2.5 rounded-full gold-gradient text-white text-xs font-semibold shadow hover:brightness-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+              <button
+                type="button"
+                onClick={triggerCelebration}
+                className="px-6 py-2.5 rounded-full gold-gradient text-white text-xs font-semibold shadow hover:brightness-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
                 <Sparkles className="w-3.5 h-3.5" /> Lancer les confettis
               </button>
-              <button type="button" onClick={() => setForceReached(false)} className="px-4 py-2.5 rounded-full border border-[#c69a58]/40 text-xs text-[#7c6d62] hover:bg-white/60 transition-colors">
+              <button
+                type="button"
+                onClick={() => setForceReached(false)}
+                className="px-4 py-2.5 rounded-full border border-[#c69a58]/40 text-xs text-[#7c6d62] hover:bg-white/60 transition-colors"
+              >
                 Repasser en compte à rebours
               </button>
             </div>
@@ -104,7 +147,19 @@ export function CountdownSection({ standalone = false, autoSimulate = false }: {
 
             <div className="mt-6 inline-flex flex-wrap justify-center items-center gap-2 text-sm text-[#6f5c4c]">
               <span>Envie d’un avant-goût du jour J ?</span>
-              <Link href={standalone ? "#" : "/simulation"} onClick={standalone ? (event) => { event.preventDefault(); setForceReached(true); triggerCelebration(); } : undefined} className="text-[#855f24] font-semibold underline hover:text-[#5d4016] flex items-center gap-1 cursor-pointer">
+              <Link
+                href={standalone ? "#" : "/simulation"}
+                onClick={
+                  standalone
+                    ? event => {
+                        event.preventDefault();
+                        setForceReached(true);
+                        triggerCelebration();
+                      }
+                    : undefined
+                }
+                className="text-[#855f24] font-semibold underline hover:text-[#5d4016] flex items-center gap-1 cursor-pointer"
+              >
                 <Sparkles className="w-3 h-3" /> Faire pleuvoir les confettis
               </Link>
             </div>

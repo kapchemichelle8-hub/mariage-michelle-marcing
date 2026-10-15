@@ -33,7 +33,9 @@ describe("wedding.submitRsvp", () => {
     expect(result.ticketCode).toMatch(/^\d{3,}$/);
 
     try {
-      const ticket = await caller.wedding.getTicket({ code: result.ticketCode });
+      const ticket = await caller.wedding.getTicket({
+        code: result.ticketCode,
+      });
       expect(ticket).toBeDefined();
       expect(ticket?.name).toBe("Test Automatisé Éphémère");
       expect(ticket?.guestsCount).toBe(2);
