@@ -12,3 +12,12 @@
 - [x] Valider le rendu mobile complet (hero, dons, formulaire RSVP et billet) via le navigateur.
 - [x] Supprimer toute mention de côté (mariée/marié) sur le billet d'invitation officiel.
 - [x] Rendre l’Espace Accueil directement accessible depuis le pied de page et l’en-tête, sous protection par mot de passe.
+
+
+## Mise à jour portraits en cœur — 15 octobre 2026
+
+- [x] Remplacer le portrait de Michelle par la photo traditionnelle fournie.
+- [x] Remplacer le portrait de Marcing par la photo cérémonielle fournie.
+- [x] Conserver la photo d’entrée et les portraits originaux hors des cœurs.
+- [x] Optimiser les deux images en WebP léger pour mobile.
+- [ ] Vérifier le rendu responsive et publier le checkpoint.
