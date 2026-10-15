@@ -1,4 +1,9 @@
-import { useEffect, type CSSProperties, type ElementType, type ReactNode } from "react";
+import {
+  useEffect,
+  type CSSProperties,
+  type ElementType,
+  type ReactNode,
+} from "react";
 import { useReveal } from "@/hooks/useReveal";
 
 /** Bloc qui apparaît doucement au défilement. */
@@ -15,7 +20,11 @@ export function Reveal({
 }) {
   const ref = useReveal<HTMLElement>();
   return (
-    <Tag ref={ref} className={`reveal ${className}`} style={{ "--delay": `${delay}ms` } as CSSProperties}>
+    <Tag
+      ref={ref}
+      className={`reveal ${className}`}
+      style={{ "--delay": `${delay}ms` } as CSSProperties}
+    >
       {children}
     </Tag>
   );
@@ -24,7 +33,12 @@ export function Reveal({
 /** Petit trait tracé « à la main » sous un titre. */
 export function HandUnderline({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 140 14" className={`hand-underline ${className}`} fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 140 14"
+      className={`hand-underline ${className}`}
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M3 9c18-5 34-6 50-4 13 2 22 4 36 2 16-2 29-6 48-3"
         stroke="currentColor"
@@ -36,13 +50,29 @@ export function HandUnderline({ className = "" }: { className?: string }) {
 }
 
 /** Titre de section : petite phrase manuscrite + grand titre + souligné. */
-export function SectionTitle({ kicker, title, children }: { kicker: string; title: ReactNode; children?: ReactNode }) {
+export function SectionTitle({
+  kicker,
+  title,
+  children,
+}: {
+  kicker: string;
+  title: ReactNode;
+  children?: ReactNode;
+}) {
   return (
     <Reveal className="text-center max-w-2xl mx-auto mb-12">
-      <p className="font-script text-3xl md:text-4xl text-[#9d7537]">{kicker}</p>
-      <h2 className="font-serif-luxury text-3xl md:text-5xl font-semibold text-[#2d241e] mt-1 leading-tight">{title}</h2>
+      <p className="font-script text-3xl md:text-4xl text-[#9d7537]">
+        {kicker}
+      </p>
+      <h2 className="font-serif-luxury text-3xl md:text-5xl font-semibold text-[#2d241e] mt-1 leading-tight">
+        {title}
+      </h2>
       <HandUnderline />
-      {children && <div className="mt-4 text-[15px] md:text-base text-[#5a4632] leading-relaxed">{children}</div>}
+      {children && (
+        <div className="mt-4 text-[15px] md:text-base text-[#5a4632] leading-relaxed">
+          {children}
+        </div>
+      )}
     </Reveal>
   );
 }
@@ -53,7 +83,13 @@ const HEART_PATH =
 /** Masque en cœur partagé (à monter une seule fois par page). */
 export function HeartClipDefs() {
   return (
-    <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
+    <svg
+      width="0"
+      height="0"
+      className="absolute"
+      aria-hidden="true"
+      focusable="false"
+    >
       <defs>
         <clipPath id="heart-clip" clipPathUnits="objectBoundingBox">
           <path d={HEART_PATH} />
@@ -64,14 +100,33 @@ export function HeartClipDefs() {
 }
 
 /** Portrait en cœur, visage placé sous l'échancrure, rendu argentique. */
-export function HeartPortrait({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
+export function HeartPortrait({
+  src,
+  alt,
+  className = "",
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
   return (
     <figure className={`heart-frame ${className}`} tabIndex={0}>
       <div className="heart-clip">
         <img src={src} alt={alt} decoding="async" />
       </div>
-      <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="heart-outline" aria-hidden="true">
-        <path d={HEART_PATH} fill="none" stroke="#fff7e8" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+      <svg
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        className="heart-outline"
+        aria-hidden="true"
+      >
+        <path
+          d={HEART_PATH}
+          fill="none"
+          stroke="#fff7e8"
+          strokeWidth="3"
+          vectorEffect="non-scaling-stroke"
+        />
       </svg>
     </figure>
   );
@@ -83,7 +138,12 @@ const DOVE_PATH =
 /** Deux colombes qui se font face autour d'un cœur. */
 export function DovesHeart({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 160 56" className={className} fill="currentColor" aria-hidden="true">
+    <svg
+      viewBox="0 0 160 56"
+      className={className}
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <path d={DOVE_PATH} transform="translate(6 6)" />
       <path d={DOVE_PATH} transform="translate(154 6) scale(-1 1)" />
       <path d="M80 48s-11-6.8-14.6-13.6C63 29.6 65.8 23.5 71.5 23.5c3.4 0 5.3 1.8 6.3 3.6.6 1 2.3 1 2.9 0 1-1.8 2.9-3.6 6.3-3.6 5.7 0 8.5 6.1 6.1 10.9C91 41.2 80 48 80 48z" />
@@ -99,7 +159,10 @@ export function ScrollProgress() {
     const update = () => {
       frame = 0;
       const max = root.scrollHeight - window.innerHeight;
-      root.style.setProperty("--progress", String(max > 0 ? Math.min(1, window.scrollY / max) : 0));
+      root.style.setProperty(
+        "--progress",
+        String(max > 0 ? Math.min(1, window.scrollY / max) : 0)
+      );
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);

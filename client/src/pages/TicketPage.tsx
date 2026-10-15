@@ -7,7 +7,11 @@ export default function TicketPage() {
   const [, params] = useRoute("/billet/:code");
   const code = (params?.code || "").trim();
 
-  const { data: ticket, isLoading, error } = trpc.wedding.getTicket.useQuery(
+  const {
+    data: ticket,
+    isLoading,
+    error,
+  } = trpc.wedding.getTicket.useQuery(
     { code },
     {
       enabled: Boolean(code && code.length >= 3),
@@ -33,13 +37,19 @@ export default function TicketPage() {
       {isLoading ? (
         <div className="card-luxury p-10 rounded-3xl text-center space-y-4 max-w-md w-full">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#9d7537]" />
-          <p className="text-sm text-muted-foreground">Recherche de votre billet officiel...</p>
+          <p className="text-sm text-muted-foreground">
+            Recherche de votre billet officiel...
+          </p>
         </div>
       ) : error || !ticket ? (
         <div className="card-luxury p-10 rounded-3xl text-center space-y-4 max-w-md w-full">
-          <h2 className="font-serif-luxury text-xl font-bold text-destructive">Billet introuvable</h2>
+          <h2 className="font-serif-luxury text-xl font-bold text-destructive">
+            Billet introuvable
+          </h2>
           <p className="text-xs text-muted-foreground">
-            Aucune invitation active ne correspond au code <strong>{code}</strong>. Si vous avez effectué une nouvelle réponse, veuillez vérifier le lien affiché ou renouveler votre confirmation.
+            Aucune invitation active ne correspond au code{" "}
+            <strong>{code}</strong>. Si vous avez effectué une nouvelle réponse,
+            veuillez vérifier le lien affiché ou renouveler votre confirmation.
           </p>
           <Link
             href="/#rsvp"
