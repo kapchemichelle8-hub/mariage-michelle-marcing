@@ -4,7 +4,8 @@ WORKDIR /app
 RUN npm install --global pnpm@10.4.1 && pnpm --version
 
 # Copy only files required to build and run the app; RSVP backups and internal notes are excluded.
-COPY package.json pnpm-lock.yaml patches/ ./
+COPY package.json pnpm-lock.yaml ./
+COPY patches/ ./patches/
 COPY client/ ./client/
 COPY server/ ./server/
 COPY shared/ ./shared/
