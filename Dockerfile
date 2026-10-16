@@ -11,9 +11,9 @@ COPY shared/ ./shared/
 COPY drizzle/ ./drizzle/
 COPY vite.config.ts tsconfig.json drizzle.config.ts ./
 
-# Keep the existing repository unchanged while declaring the reviewed native build scripts
-# needed by the pinned pnpm 10 toolchain.
-RUN printf '%s\n' 'packages:' '  - .' 'onlyBuiltDependencies:' '  - esbuild' '  - @tailwindcss/oxide' > pnpm-workspace.yaml
+# Keep the repository unchanged while declaring the reviewed native build scripts
+# in the package.json location required by the pinned pnpm 10.4.1 toolchain.
+RUN node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync("package.json","utf8")); p.pnpm={...(p.pnpm||{}),onlyBuiltDependencies:["esbuild","@tailwindcss/oxide"]}; fs.writeFileSync("package.json",JSON.stringify(p,null,2)+"\n")' && printf '%s\n' 'packages:' '  - .' > pnpm-workspace.yaml
 
 # The route manifest is generated inside the image from the routes present in the unchanged app.
 RUN mkdir -p client/public && printf '%s\n' '{"routes":[{"path":"/","title":"Accueil — Mariage Michelle & Marcing"},{"path":"/billet/:code","title":"Billet d’invitation"},{"path":"/plan/:code","title":"Plan de table"},{"path":"/indisponible","title":"Indisponibilité"},{"path":"/simulation","title":"Simulation"},{"path":"/admin","title":"Administration"},{"path":"/accueil","title":"Accueil des invités"},{"path":"/badge-accueil","title":"Badge d’accueil"}]}' > client/public/manus-routes.json
