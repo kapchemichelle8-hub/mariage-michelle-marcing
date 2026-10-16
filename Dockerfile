@@ -16,9 +16,7 @@ COPY vite.config.ts tsconfig.json drizzle.config.ts ./
 RUN printf '%s\n' 'packages:' '  - .' 'onlyBuiltDependencies:' '  - esbuild' '  - @tailwindcss/oxide' > pnpm-workspace.yaml
 
 # The route manifest is generated inside the image from the routes present in the unchanged app.
-RUN mkdir -p client/public && cat > client/public/manus-routes.json <<'JSON'
-{"routes":[{"path":"/","title":"Accueil — Mariage Michelle & Marcing"},{"path":"/billet/:code","title":"Billet d’invitation"},{"path":"/plan/:code","title":"Plan de table"},{"path":"/indisponible","title":"Indisponibilité"},{"path":"/simulation","title":"Simulation"},{"path":"/admin","title":"Administration"},{"path":"/accueil","title":"Accueil des invités"},{"path":"/badge-accueil","title":"Badge d’accueil"}]}
-JSON
+RUN mkdir -p client/public && printf '%s\n' '{"routes":[{"path":"/","title":"Accueil — Mariage Michelle & Marcing"},{"path":"/billet/:code","title":"Billet d’invitation"},{"path":"/plan/:code","title":"Plan de table"},{"path":"/indisponible","title":"Indisponibilité"},{"path":"/simulation","title":"Simulation"},{"path":"/admin","title":"Administration"},{"path":"/accueil","title":"Accueil des invités"},{"path":"/badge-accueil","title":"Badge d’accueil"}]}' > client/public/manus-routes.json
 
 RUN pnpm install --frozen-lockfile && pnpm ignored-builds && pnpm build
 
