@@ -23,8 +23,8 @@ import { WEDDING_CONFIG } from "../weddingConfig";
 import InviteeRosterAdmin from "../components/InviteeRosterAdmin";
 
 const EVENT_LABELS: Record<string, string> = {
-  civil: "Mairie",
-  church: "Église",
+  civil: "Mariage civil",
+  church: "Bénédiction nuptiale",
   party: "Soirée",
 };
 

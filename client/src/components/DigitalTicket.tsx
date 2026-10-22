@@ -29,8 +29,8 @@ export interface TicketData {
 }
 
 const EVENT_LABELS: Record<string, { label: string; time: string }> = {
-  civil: { label: "Mairie", time: "13 h 00" },
-  church: { label: "Église", time: "15 h 00" },
+  civil: { label: "Mariage civil", time: "13 h 00" },
+  church: { label: "Bénédiction nuptiale", time: "15 h 00" },
   party: { label: "Soirée", time: "20 h 00" },
 };
 
@@ -177,7 +177,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
             <div className="ticket-content-block rounded-xl border border-[#ebdcc8]/70 bg-[#faf7f2] p-3">
               <span className="block text-[10px] uppercase tracking-wider text-[#7c6d62]">Lieux du mariage</span>
               <strong className="mt-0.5 block font-semibold text-[#2d241e]">Douala, Cameroun</strong>
-              <span className="text-[11px] text-[#7c6d62]">Mairie · Église · Soirée</span>
+              <span className="text-[11px] text-[#7c6d62]">Mariage civil · Bénédiction nuptiale · Soirée</span>
             </div>
           </section>
 

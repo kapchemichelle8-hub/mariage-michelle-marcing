@@ -73,8 +73,8 @@ function extractTicketCode(raw: string) {
 }
 
 const eventLabel: Record<string, string> = {
-  civil: "Mairie",
-  church: "Église",
+  civil: "Mariage civil",
+  church: "Bénédiction nuptiale",
   party: "Soirée",
 };
 

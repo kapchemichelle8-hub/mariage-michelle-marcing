@@ -30,8 +30,8 @@ const EVENT_OPTIONS: {
   time: string;
   sub: string;
 }[] = [
-  { id: "civil", label: "Mairie", time: "13 h 00", sub: "Consentements civils" },
-  { id: "church", label: "Église", time: "15 h 00", sub: "Messe d’action de grâce" },
+  { id: "civil", label: "Mariage civil", time: "13 h 00", sub: "Consentements civils" },
+  { id: "church", label: "Bénédiction nuptiale", time: "15 h 00", sub: "Célébration nuptiale" },
   { id: "party", label: "Soirée", time: "20 h 00", sub: "Fête & réception" },
 ];
 
@@ -111,7 +111,7 @@ export function RsvpFormSection() {
       return;
     }
     if (attendance === "yes" && selectedEvents.length === 0) {
-      toast.error("Veuillez sélectionner au moins un moment : mairie, église ou soirée.");
+      toast.error("Veuillez sélectionner au moins un moment : mariage civil, bénédiction nuptiale ou soirée.");
       return;
     }
 
@@ -258,7 +258,7 @@ export function RsvpFormSection() {
                       À quels moments serons-nous réunis ? *
                     </label>
                     <p className="text-xs text-[#7c6d62] mb-3">
-                      Sélectionnez la mairie, l’église, la soirée, ou plusieurs moments.
+                      Sélectionnez le mariage civil, la bénédiction nuptiale, la soirée, ou plusieurs moments.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {EVENT_OPTIONS.map(eventOption => {
