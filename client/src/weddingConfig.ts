@@ -38,7 +38,7 @@ export const WEDDING_CONFIG = {
     buffetAtmosphere: "/manus-storage/buffetAtmosphere_b403f404.webp",
     flowersBanner: "/manus-storage/flowersBanner_8d4a287e.webp",
     videoPoster: "/manus-storage/videoPoster_40bb41ea_18f8d4df.webp",
-    videoUrl: "/manus-storage/video_mariage_1080p_avec_son_2a4f704e.mp4",
+    videoUrl: "/manus-storage/wedding-video_4e444de8.mp4",
   },
   schedule: [
     {
