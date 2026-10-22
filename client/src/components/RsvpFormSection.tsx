@@ -200,7 +200,7 @@ export function RsvpFormSection() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="display-name" className="block text-sm font-semibold text-[#2d241e] mb-1.5">
-                  Nom ou surnom à afficher sur le billet *
+                  Nom complet ou nom de famille à afficher sur le billet *
                 </label>
                 <input
                   id="display-name"
@@ -209,7 +209,7 @@ export function RsvpFormSection() {
                   maxLength={160}
                   value={name}
                   onChange={event => setName(event.target.value)}
-                  placeholder="Le nom sous lequel vos proches vous reconnaissent"
+                  placeholder="Votre nom complet ou nom de famille"
                   className="w-full px-4 py-3 rounded-xl border border-[#ebdcc8] bg-white focus:outline-none focus:ring-2 focus:ring-[#c69a58] text-sm"
                 />
                 <p className="mt-1.5 text-[11px] text-[#7c6d62]">

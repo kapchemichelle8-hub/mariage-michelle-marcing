@@ -77,7 +77,7 @@ export const legacySeatPlan = mysqlTable(
   })
 );
 
-/** Historical rows are retained; only new code-based rows have invitationId set. */
+/** RSVP rows; invitationId identifies the one-time code registration. */
 export const rsvps = mysqlTable(
   "rsvps",
   {
@@ -109,6 +109,23 @@ export const rsvps = mysqlTable(
 export type Rsvp = typeof rsvps.$inferSelect;
 export type InsertRsvp = typeof rsvps.$inferInsert;
 
+/** Archived historical messages kept after the RSVP reset. */
+export const legacyGuestbookMessages = mysqlTable(
+  "legacy_guestbook_messages",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    sourceRsvpId: int("sourceRsvpId").notNull().unique(),
+    authorName: varchar("authorName", { length: 160 }).notNull(),
+    message: text("message").notNull(),
+    createdAt: timestamp("createdAt").notNull(),
+  },
+  table => ({
+    createdAtIdx: index("legacy_guestbook_messages_created_at_idx").on(
+      table.createdAt
+    ),
+  })
+);
+
 /** New messages are append-only and never replace the historical RSVP.message values. */
 export const guestbookMessages = mysqlTable(
   "guestbook_messages",
@@ -123,9 +140,9 @@ export const guestbookMessages = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => ({
-    invitationMessageUnique: uniqueIndex(
-      "guestbook_messages_invitation_hash_unique"
-    ).on(table.invitationId, table.messageHash),
+    invitationIdIdx: index("guestbook_messages_invitation_id_idx").on(
+      table.invitationId
+    ),
     createdAtIdx: index("guestbook_messages_created_at_idx").on(
       table.createdAt
     ),

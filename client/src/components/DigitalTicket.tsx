@@ -219,9 +219,6 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
                   {ticket.seatAssignment.tableVirtue}
                 </p>
               </div>
-              <p className="max-w-[42%] text-right text-[10px] leading-relaxed text-[#e8dccb]">
-                Scannez le QR code pour retrouver votre table.
-              </p>
             </section>
           ) : null}
 

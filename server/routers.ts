@@ -195,6 +195,12 @@ export const appRouter = router({
             message: "Code invité non reconnu. Vérifiez le code reçu.",
           });
         }
+        if (await db.getRsvpByInvitationId(invite.id)) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Ce code invité a déjà été utilisé. Il ne peut plus servir à une autre inscription.",
+          });
+        }
         // Ne pas renvoyer le nom ni une liste de personnes à l’appelant public.
         return {
           recognized: true as const,
@@ -257,6 +263,12 @@ export const appRouter = router({
           message: "Code invité non reconnu. Vérifiez le code reçu.",
         });
       }
+      if (await db.getRsvpByInvitationId(invite.id)) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Ce code invité a déjà été utilisé. Il ne peut plus servir à une autre inscription.",
+        });
+      }
 
       const eventsString =
         input.attendance === "yes" && input.events
@@ -265,15 +277,27 @@ export const appRouter = router({
               .join(",")
           : null;
       const displayName = input.name.trim();
-      const savedRsvp = await db.upsertInvitationRsvp({
-        invitationId: invite.id,
-        name: displayName,
-        side: invite.side,
-        attendance: input.attendance,
-        events: eventsString,
-        guestsCount: input.attendance === "yes" ? input.guestsCount : 0,
-        ticketCode: randomBytes(24).toString("base64url"),
-      });
+      let savedRsvp;
+      try {
+        savedRsvp = await db.insertInvitationRsvp({
+          invitationId: invite.id,
+          name: displayName,
+          side: invite.side,
+          attendance: input.attendance,
+          events: eventsString,
+          guestsCount: input.attendance === "yes" ? input.guestsCount : 0,
+          ticketCode: randomBytes(24).toString("base64url"),
+        });
+      } catch (error) {
+        if (error instanceof Error && /duplicate|unique/i.test(error.message)) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Ce code invité a déjà été utilisé. Il ne peut plus servir à une autre inscription.",
+            cause: error,
+          });
+        }
+        throw error;
+      }
       if (!savedRsvp) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

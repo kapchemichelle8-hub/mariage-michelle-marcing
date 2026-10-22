@@ -10,8 +10,9 @@ vi.mock("./db", async importOriginal => {
     ...actual,
     getInvitationByCode: vi.fn(),
     getInvitationById: vi.fn(),
+    getRsvpByInvitationId: vi.fn(),
     getRsvpByTicketCode: vi.fn(),
-    upsertInvitationRsvp: vi.fn(),
+    insertInvitationRsvp: vi.fn(),
     addGuestbookMessage: vi.fn(),
   };
 });
@@ -32,7 +33,7 @@ const invitation = {
 const publicTicketToken = "AbCdEf0123456789_-".padEnd(32, "Z");
 const savedRsvp = {
   ticketCode: publicTicketToken,
-} as Awaited<ReturnType<typeof db.upsertInvitationRsvp>>;
+} as Awaited<ReturnType<typeof db.insertInvitationRsvp>>;
 const ticketRow = {
   id: 19,
   name: "Nom à afficher",
@@ -67,7 +68,8 @@ describe("wedding invitation code flow", () => {
     vi.mocked(db.getInvitationByCode).mockResolvedValue(invitation);
     vi.mocked(db.getInvitationById).mockResolvedValue(invitation);
     vi.mocked(db.getRsvpByTicketCode).mockResolvedValue(ticketRow);
-    vi.mocked(db.upsertInvitationRsvp).mockResolvedValue(savedRsvp);
+    vi.mocked(db.getRsvpByInvitationId).mockResolvedValue(undefined);
+    vi.mocked(db.insertInvitationRsvp).mockResolvedValue(savedRsvp);
     vi.mocked(db.addGuestbookMessage).mockResolvedValue(undefined);
   });
 
@@ -90,7 +92,7 @@ describe("wedding invitation code flow", () => {
     expect(db.getInvitationByCode).toHaveBeenCalledWith("MM001");
   });
 
-  it("upserts one RSVP by verified invitation code and appends a separate message", async () => {
+  it("inserts one RSVP by verified invitation code and appends a separate message", async () => {
     const caller = appRouter.createCaller(createMockContext());
     const result = await caller.wedding.submitRsvp({
       code: "mm001",
@@ -105,7 +107,7 @@ describe("wedding invitation code flow", () => {
     expect(result.attendance).toBe("yes");
     expect(result.ticketCode).toBe(publicTicketToken);
     expect(result.ticketCode).not.toBe("MM001");
-    expect(db.upsertInvitationRsvp).toHaveBeenCalledWith(
+    expect(db.insertInvitationRsvp).toHaveBeenCalledWith(
       expect.objectContaining({
         invitationId: 7,
         ticketCode: expect.stringMatching(/^[A-Za-z0-9_-]{32}$/),
@@ -121,6 +123,23 @@ describe("wedding invitation code flow", () => {
         message: "Un souhait de test",
       })
     );
+  });
+
+  it("refuses a code that has already been used", async () => {
+    vi.mocked(db.getRsvpByInvitationId).mockResolvedValue(ticketRow);
+    const caller = appRouter.createCaller(createMockContext());
+
+    await expect(caller.wedding.lookupInvitationCode({ code: "MM001" })).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await expect(
+      caller.wedding.submitRsvp({
+        code: "MM001",
+        name: "Deuxième personne",
+        attendance: "no",
+      })
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(db.insertInvitationRsvp).not.toHaveBeenCalled();
   });
 
   it("returns an allow-listed ticket payload without email, message, IDs or timestamps", async () => {

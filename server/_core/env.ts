@@ -1,8 +1,7 @@
 const adminPassword = process.env.ADMIN_PASSWORD ?? "";
 const receptionPassword = process.env.RECEPTION_PASSWORD ?? "";
-// MANUS_JWT_SECRET est injectée au runtime par WebDev; JWT_SECRET reste une
-// compatibilité uniquement si une clé privée conforme est déjà configurée.
-const cookieSecret = process.env.MANUS_JWT_SECRET ?? process.env.JWT_SECRET ?? "";
+// MANUS_JWT_SECRET est injectée au runtime par WebDev et gérée par la plateforme.
+const cookieSecret = process.env.MANUS_JWT_SECRET ?? "";
 
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",

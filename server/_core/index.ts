@@ -6,7 +6,6 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
-import { ensureRsvpSideColumn } from "../db";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { assertRequiredSecrets } from "./env";
@@ -32,7 +31,6 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   if (process.env.NODE_ENV === "production") assertRequiredSecrets();
-  await ensureRsvpSideColumn();
   const app = express();
   app.set("trust proxy", 1);
   const server = createServer(app);

@@ -5,6 +5,7 @@ import {
   invitedGuests,
   InsertRsvp,
   InsertUser,
+  legacyGuestbookMessages,
   legacySeatPlan,
   Rsvp,
   rsvps,
@@ -27,31 +28,6 @@ export async function getDb() {
     }
   }
   return _db;
-}
-
-/**
- * Ajoute la colonne `side` si la base n'a pas encore reçu la migration 0002,
- * pour que le formulaire fonctionne même si l'hébergeur n'applique pas les migrations.
- */
-export async function ensureRsvpSideColumn() {
-  const db = await getDb();
-  if (!db) return;
-  try {
-    const [rows] = (await db.execute(
-      sql`SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'rsvps' AND COLUMN_NAME = 'side'`
-    )) as unknown as [Array<{ n: number | string }>];
-    if (Number(rows[0]?.n) === 0) {
-      await db.execute(
-        sql`ALTER TABLE \`rsvps\` ADD \`side\` enum('bride','groom')`
-      );
-      console.log("[Database] Colonne rsvps.side ajoutée");
-    }
-  } catch (error) {
-    console.warn(
-      "[Database] Vérification de la colonne rsvps.side impossible:",
-      error
-    );
-  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -142,6 +118,17 @@ export async function getRsvpByTicketCode(ticketCode: string) {
   return rows[0];
 }
 
+export async function getRsvpByInvitationId(invitationId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(rsvps)
+    .where(eq(rsvps.invitationId, invitationId))
+    .limit(1);
+  return rows[0];
+}
+
 export async function getInvitationByCode(code: string) {
   const db = await getDb();
   if (!db) return undefined;
@@ -221,7 +208,7 @@ export async function getLegacySeatAssignmentByName(name: string) {
   return findSeatAssignment(name, assignments);
 }
 
-export async function upsertInvitationRsvp(data: {
+export async function insertInvitationRsvp(data: {
   invitationId: number;
   name: string;
   side: "bride" | "groom";
@@ -233,24 +220,12 @@ export async function upsertInvitationRsvp(data: {
   const db = await getDb();
   if (!db) throw new Error("Base de données indisponible");
 
-  await db
-    .insert(rsvps)
-    .values({ ...data, message: null })
-    .onDuplicateKeyUpdate({
-      set: {
-        name: data.name,
-        side: data.side,
-        attendance: data.attendance,
-        events: data.events,
-        guestsCount: data.guestsCount,
-        updatedAt: new Date(),
-      },
-    });
+  await db.insert(rsvps).values({ ...data, message: null });
 
   const rows = await db
     .select()
     .from(rsvps)
-    .where(eq(rsvps.invitationId, data.invitationId))
+    .where(eq(rsvps.ticketCode, data.ticketCode))
     .limit(1);
   return rows[0];
 }
@@ -263,9 +238,7 @@ export async function addGuestbookMessage(data: {
 }) {
   const db = await getDb();
   if (!db) throw new Error("Base de données indisponible");
-  await db.insert(guestbookMessages).values(data).onDuplicateKeyUpdate({
-    set: { message: data.message },
-  });
+  await db.insert(guestbookMessages).values(data);
 }
 
 export async function getAllGuestbookMessages() {
@@ -397,11 +370,12 @@ export async function getAdminWeddingStats() {
     };
   }
 
-  const [rows, inviteRows] = await Promise.all([
+  const [rows, inviteRows, archivedMessages] = await Promise.all([
     db.select().from(rsvps),
     db
       .select({ tableNumber: invitedGuests.tableNumber })
       .from(invitedGuests),
+    db.select({ id: legacyGuestbookMessages.id }).from(legacyGuestbookMessages),
   ]);
   const current = rows.filter(row => row.invitationId !== null);
   const historical = rows.filter(row => row.invitationId === null);
@@ -417,8 +391,9 @@ export async function getAdminWeddingStats() {
     declinedResponses: declined.length,
     totalResponses: current.length,
     historicalResponses: historical.length,
-    historicalMessages: historical.filter(row => Boolean(row.message?.trim()))
-      .length,
+    historicalMessages:
+      historical.filter(row => Boolean(row.message?.trim())).length +
+      archivedMessages.length,
     invitedCount: inviteRows.length,
     unassignedInviteCount: inviteRows.filter(row => !row.tableNumber).length,
   };
@@ -428,7 +403,7 @@ export async function getApprovedMessages() {
   const db = await getDb();
   if (!db) return [];
 
-  const [historical, current] = await Promise.all([
+  const [historical, archived, current] = await Promise.all([
     db
       .select({
         id: rsvps.id,
@@ -438,6 +413,14 @@ export async function getApprovedMessages() {
       })
       .from(rsvps)
       .where(sql`${rsvps.message} IS NOT NULL AND ${rsvps.message} != ''`),
+    db
+      .select({
+        id: legacyGuestbookMessages.id,
+        name: legacyGuestbookMessages.authorName,
+        message: legacyGuestbookMessages.message,
+        createdAt: legacyGuestbookMessages.createdAt,
+      })
+      .from(legacyGuestbookMessages),
     db
       .select({
         id: guestbookMessages.id,
@@ -452,6 +435,11 @@ export async function getApprovedMessages() {
     ...historical.map(row => ({
       ...row,
       id: `historique-${row.id}`,
+      source: "historique" as const,
+    })),
+    ...archived.map(row => ({
+      ...row,
+      id: `historique-archive-${row.id}`,
       source: "historique" as const,
     })),
     ...current.map(row => ({
