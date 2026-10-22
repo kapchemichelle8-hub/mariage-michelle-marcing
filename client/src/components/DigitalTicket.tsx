@@ -149,7 +149,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
             Billet d’accès officiel
           </h1>
           <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#9d7537]">
-            {WEDDING_CONFIG.title} · {WEDDING_CONFIG.dateString}
+            {WEDDING_CONFIG.dateLong}
           </p>
         </header>
 
@@ -222,17 +222,31 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
                 Scannez le QR code pour retrouver votre table.
               </p>
             </section>
-          ) : (
-            <section className="ticket-content-block rounded-xl border border-[#e1cfb5] bg-[#f8f3ea] p-3 text-center text-[11px] text-[#6c4b1a]">
-              Votre table vous sera communiquée dès que le plan de salle sera finalisé.
-            </section>
-          )}
+          ) : null}
 
-          <section className="ticket-content-block flex items-start gap-2 rounded-xl border border-[#c69a58]/30 bg-[#fbf8f3] p-3">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#9d7537]" aria-hidden="true" />
-            <p className="text-[11px] leading-relaxed text-[#5a4632]">
-              <strong>Église à 15 h :</strong> Paroisse Christ Sauveur de Mbangué — 4Q35+WRC, Douala.
-            </p>
+          <section className="ticket-content-block rounded-xl border border-[#c69a58]/30 bg-[#fbf8f3] p-3">
+            <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#855f24]">
+              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>Lieux de la journée</span>
+            </div>
+            <div className="space-y-1.5">
+              {WEDDING_CONFIG.schedule.map(item => {
+                const label = EVENT_LABELS[item.id]?.label ?? item.title;
+                return (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-[92px_1fr] gap-2 border-t border-[#e1cfb5]/70 pt-1.5 first:border-t-0 first:pt-0"
+                  >
+                    <span className="text-[10px] font-semibold text-[#855f24]">
+                      {label} · {item.start}
+                    </span>
+                    <span className="text-[10px] leading-relaxed text-[#5a4632]">
+                      {item.location}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </section>
         </div>
 
