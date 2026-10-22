@@ -7,6 +7,7 @@ import {
   MapPin,
   Share2,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
@@ -44,6 +45,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
         .map(value => value.trim())
         .filter(Boolean)
     : [];
+  const qrValue = `${window.location.origin}/plan/${ticket.ticketCode}`;
 
   const makePng = async () => {
     if (!ticketRef.current) throw new Error("Billet indisponible");
@@ -235,7 +237,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
           </section>
         </div>
 
-        <footer className="ticket-footer border-t border-dashed border-[#c69a58]/50 pt-3">
+        <footer className="ticket-footer flex items-end justify-between gap-3 border-t border-dashed border-[#c69a58]/50 pt-3">
           <div className="min-w-0">
             <span className="block text-[9px] uppercase tracking-wider text-[#7c6d62]">Code invité</span>
             <span className="mt-0.5 block break-all font-mono text-xl font-bold tracking-[0.14em] text-[#2d241e]">
@@ -245,6 +247,22 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
               <Heart className="h-3.5 w-3.5 fill-[#c69a58]/30" aria-hidden="true" />
               Merci d’être là pour notre oui.
             </p>
+          </div>
+          <div className="shrink-0 text-center">
+            <div className="rounded-xl border border-[#c69a58]/50 bg-white p-1.5">
+              <QRCodeSVG
+                value={qrValue}
+                size={88}
+                level="M"
+                bgColor="#ffffff"
+                fgColor="#2d241e"
+                includeMargin={false}
+                aria-label={`QR code privé du billet ${ticket.ticketCode}`}
+              />
+            </div>
+            <span className="mt-1 block text-[8px] font-semibold uppercase tracking-wider text-[#855f24]">
+              QR équipe accueil
+            </span>
           </div>
         </footer>
       </article>
