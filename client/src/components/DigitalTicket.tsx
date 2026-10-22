@@ -174,9 +174,9 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
               <span className="text-[11px] text-[#7c6d62]">À partir de 13 h 00</span>
             </div>
             <div className="ticket-content-block rounded-xl border border-[#ebdcc8]/70 bg-[#faf7f2] p-3">
-              <span className="block text-[10px] uppercase tracking-wider text-[#7c6d62]">Lieu de la messe</span>
-              <strong className="mt-0.5 block font-semibold text-[#2d241e]">Mbangué</strong>
-              <span className="text-[11px] text-[#7c6d62]">Douala, Cameroun</span>
+              <span className="block text-[10px] uppercase tracking-wider text-[#7c6d62]">Lieux du mariage</span>
+              <strong className="mt-0.5 block font-semibold text-[#2d241e]">Douala, Cameroun</strong>
+              <span className="text-[11px] text-[#7c6d62]">Mairie · Église · Soirée</span>
             </div>
           </section>
 
@@ -232,18 +232,23 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
             <div className="space-y-1.5">
               {WEDDING_CONFIG.schedule.map(item => {
                 const label = EVENT_LABELS[item.id]?.label ?? item.title;
+                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.mapQuery ?? item.location)}`;
                 return (
-                  <div
+                  <a
                     key={item.id}
-                    className="grid grid-cols-[92px_1fr] gap-2 border-t border-[#e1cfb5]/70 pt-1.5 first:border-t-0 first:pt-0"
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Ouvrir l’itinéraire Google Maps vers ${label} : ${item.location}`}
+                    className="grid grid-cols-[92px_1fr] gap-2 border-t border-[#e1cfb5]/70 pt-1.5 text-inherit no-underline first:border-t-0 first:pt-0 hover:text-[#855f24] focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c69a58]"
                   >
                     <span className="text-[10px] font-semibold text-[#855f24]">
                       {label} · {item.start}
                     </span>
-                    <span className="text-[10px] leading-relaxed text-[#5a4632]">
+                    <span className="text-[10px] leading-relaxed text-[#5a4632] underline decoration-[#c69a58]/50 underline-offset-2">
                       {item.location}
                     </span>
-                  </div>
+                  </a>
                 );
               })}
             </div>

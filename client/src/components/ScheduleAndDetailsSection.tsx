@@ -1,4 +1,4 @@
-import { Church, Clock, Heart, MapPin, Music, Play, Scale } from "lucide-react";
+import { Church, Heart, MapPin, Music, Play, Scale } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import { useReveal } from "@/hooks/useReveal";
 import { WEDDING_CONFIG } from "../weddingConfig";
@@ -16,7 +16,7 @@ function ScheduleStep({ item, index }: { item: Step; index: number }) {
       index
     ] ?? "";
   const offset = ["md:ml-0", "md:ml-14", "md:ml-6"][index] ?? "";
-  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.mapQuery ?? item.location)}`;
+  const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.mapQuery ?? item.location)}`;
 
   return (
     <li
@@ -44,25 +44,18 @@ function ScheduleStep({ item, index }: { item: Step; index: number }) {
         <p className="text-[15px] text-[#4a3b30] leading-relaxed mt-2">
           {item.description}
         </p>
-        <p className="mt-4 pt-4 border-t border-dashed border-[#e1cfb5] flex items-start gap-2 text-sm font-medium text-[#5a4632]">
+        <a
+          href={mapUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Ouvrir l’itinéraire Google Maps vers ${item.location}`}
+          className="mt-4 pt-4 border-t border-dashed border-[#e1cfb5] flex items-start gap-2 text-sm font-medium text-[#5a4632] hover:text-[#855f24]"
+        >
           <MapPin className="w-4 h-4 mt-0.5 text-[#9d7537] shrink-0" />
-          <span>{item.location}</span>
-        </p>
-        {item.confirmed ? (
-          <a
-            href={mapUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#855f24] underline decoration-[#c69a58]/50 underline-offset-4 hover:decoration-[#855f24]"
-          >
-            Ouvrir la localisation dans Google Maps
-          </a>
-        ) : (
-          <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#f4ede1] px-3 py-1 text-xs font-semibold text-[#855f24]">
-            <Clock className="w-3.5 h-3.5" /> Lieu à venir, on vous tient au
-            courant
+          <span className="underline decoration-[#c69a58]/50 underline-offset-4">
+            {item.location} · Ouvrir l’itinéraire Google Maps
           </span>
-        )}
+        </a>
       </article>
     </li>
   );
