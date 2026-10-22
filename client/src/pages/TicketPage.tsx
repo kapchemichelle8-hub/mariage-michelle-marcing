@@ -62,13 +62,13 @@ export default function TicketPage() {
         <DigitalTicket
           ticket={{
             ticketCode: ticket.ticketCode,
+            invitationCode: ticket.invitationCode,
             name: ticket.name,
             guestsCount: ticket.guestsCount,
             attendance: ticket.attendance,
             side: ticket.side,
-            events: (ticket as any).events,
-            createdAt: ticket.createdAt,
-            seatAssignment: (ticket as any).seatAssignment,
+            events: ticket.events,
+            seatAssignment: ticket.seatAssignment,
           }}
         />
       )}

@@ -1,0 +1,1 @@
+ALTER TABLE `invited_guests` ADD CONSTRAINT `invited_guests_source_serial_unique` UNIQUE(`sourceSheet`,`sourceSerial`);

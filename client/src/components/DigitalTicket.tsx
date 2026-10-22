@@ -14,6 +14,7 @@ import { WEDDING_CONFIG } from "../weddingConfig";
 
 export interface TicketData {
   ticketCode: string;
+  invitationCode: string;
   name: string;
   guestsCount: number;
   attendance: "yes" | "no";
@@ -257,9 +258,9 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
 
         <footer className="ticket-footer flex items-end justify-between gap-3 border-t border-dashed border-[#c69a58]/50 pt-3">
           <div className="min-w-0">
-            <span className="block text-[9px] uppercase tracking-wider text-[#7c6d62]">N° d’invitation unique</span>
+            <span className="block text-[9px] uppercase tracking-wider text-[#7c6d62]">Code invité</span>
             <span className="mt-0.5 block break-all font-mono text-xl font-bold tracking-[0.14em] text-[#2d241e]">
-              {ticket.ticketCode}
+              {ticket.invitationCode}
             </span>
             <p className="mt-2 flex items-center gap-1.5 font-serif-luxury text-xs font-semibold text-[#855f24]">
               <Heart className="h-3.5 w-3.5 fill-[#c69a58]/30" aria-hidden="true" />

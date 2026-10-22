@@ -9,6 +9,7 @@ import { appRouter } from "../routers";
 import { ensureRsvpSideColumn } from "../db";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { assertRequiredSecrets } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,8 +31,10 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  if (process.env.NODE_ENV === "production") assertRequiredSecrets();
   await ensureRsvpSideColumn();
   const app = express();
+  app.set("trust proxy", 1);
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));

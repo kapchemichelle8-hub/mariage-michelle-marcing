@@ -29,6 +29,20 @@
       "when": 1791566929718,
       "tag": "0003_plain_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1792668012106,
+      "tag": "0004_invitation_codes_and_private_seating",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1792668748421,
+      "tag": "0005_perfect_songbird",
+      "breakpoints": true
     }
   ]
 }

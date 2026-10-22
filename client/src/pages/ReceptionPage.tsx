@@ -13,7 +13,7 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
@@ -22,6 +22,7 @@ type RosterEntry = {
   id: number;
   name: string;
   ticketCode: string;
+  invitationCode: string | null;
   guestsCount: number;
   attendance: "yes" | "no";
   events: string | null;
@@ -31,13 +32,29 @@ type RosterEntry = {
 };
 
 type CheckIn = { at: string; ticketCode: string };
-const ROSTER_KEY = "michelle-marcing-reception-roster-v1";
-const CHECKINS_KEY = "michelle-marcing-reception-checkins-v1";
-const DEVICE_KEY = "michelle-marcing-reception-device-unlocked-v1";
+const ROSTER_KEY = "michelle-marcing-reception-roster-v2";
+const CHECKINS_KEY = "michelle-marcing-reception-checkins-v2";
+const DEVICE_KEY = "michelle-marcing-reception-device-unlocked-v2";
+const LEGACY_KEYS = [
+  "michelle-marcing-reception-roster-v1",
+  "michelle-marcing-reception-checkins-v1",
+  "michelle-marcing-reception-device-unlocked-v1",
+];
+const IDLE_LOCK_MS = 15 * 60 * 1000;
+
+function hasActiveDeviceSession() {
+  try {
+    const expiresAt = Number(sessionStorage.getItem(DEVICE_KEY) || 0);
+    return Number.isFinite(expiresAt) && expiresAt > Date.now();
+  } catch {
+    return false;
+  }
+}
 
 function readJson<T>(key: string, fallback: T): T {
+  if (!hasActiveDeviceSession()) return fallback;
   try {
-    const raw = localStorage.getItem(key);
+    const raw = sessionStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -63,9 +80,7 @@ const eventLabel: Record<string, string> = {
 
 export default function ReceptionPage() {
   const [password, setPassword] = useState("");
-  const [unlocked, setUnlocked] = useState(
-    () => localStorage.getItem(DEVICE_KEY) === "1"
-  );
+  const [unlocked, setUnlocked] = useState(() => hasActiveDeviceSession());
   const [roster, setRoster] = useState<RosterEntry[]>(() =>
     readJson(ROSTER_KEY, [])
   );
@@ -81,7 +96,7 @@ export default function ReceptionPage() {
 
   const login = trpc.admin.login.useMutation({
     onSuccess: async () => {
-      localStorage.setItem(DEVICE_KEY, "1");
+      sessionStorage.setItem(DEVICE_KEY, String(Date.now() + IDLE_LOCK_MS));
       setUnlocked(true);
       setPassword("");
       toast.success("Téléphone autorisé pour le mode accueil.");
@@ -89,6 +104,7 @@ export default function ReceptionPage() {
     },
     onError: error => toast.error(error.message || "Code incorrect."),
   });
+  const logoutMutation = trpc.admin.logout.useMutation({ retry: false });
   const rosterQuery = trpc.reception.roster.useQuery(undefined, {
     enabled: unlocked && isOnline,
     retry: false,
@@ -107,11 +123,11 @@ export default function ReceptionPage() {
   }, []);
 
   useEffect(() => {
-    if (rosterQuery.data && rosterQuery.data.length) {
+    if (unlocked && rosterQuery.data && rosterQuery.data.length) {
       setRoster(rosterQuery.data as RosterEntry[]);
-      localStorage.setItem(ROSTER_KEY, JSON.stringify(rosterQuery.data));
+      sessionStorage.setItem(ROSTER_KEY, JSON.stringify(rosterQuery.data));
     }
-  }, [rosterQuery.data]);
+  }, [rosterQuery.data, unlocked]);
 
   useEffect(
     () => () => {
@@ -124,15 +140,19 @@ export default function ReceptionPage() {
     const needle = query.trim().toLowerCase();
     if (!needle) return roster;
     return roster.filter(entry =>
-      `${entry.name} ${entry.ticketCode} ${entry.tableNumber ?? ""} ${entry.tableVirtue ?? ""}`
+      `${entry.name} ${entry.invitationCode ?? ""} ${entry.ticketCode} ${entry.tableNumber ?? ""} ${entry.tableVirtue ?? ""}`
         .toLowerCase()
         .includes(needle)
     );
   }, [query, roster]);
 
   const markArrival = (rawCode: string) => {
-    const code = extractTicketCode(rawCode).toUpperCase();
-    const found = roster.find(entry => entry.ticketCode.toUpperCase() === code);
+    const code = extractTicketCode(rawCode).trim();
+    const found = roster.find(
+      entry =>
+        entry.ticketCode === code ||
+        entry.invitationCode?.toUpperCase() === code.toUpperCase()
+    );
     if (!found) {
       setSelected(null);
       toast.error(
@@ -153,7 +173,7 @@ export default function ReceptionPage() {
       },
     };
     setCheckins(next);
-    localStorage.setItem(CHECKINS_KEY, JSON.stringify(next));
+    sessionStorage.setItem(CHECKINS_KEY, JSON.stringify(next));
     toast.success(`${found.name} est marqué(e) comme arrivé(e).`);
   };
 
@@ -201,6 +221,58 @@ export default function ReceptionPage() {
       );
   };
 
+  const lockDevice = useCallback(() => {
+    scanControlsRef.current?.stop();
+    scanControlsRef.current = null;
+    setIsScanning(false);
+    sessionStorage.removeItem(DEVICE_KEY);
+    sessionStorage.removeItem(ROSTER_KEY);
+    sessionStorage.removeItem(CHECKINS_KEY);
+    setRoster([]);
+    setCheckins({});
+    setSelected(null);
+    setQuery("");
+    setUnlocked(false);
+    if (isOnline) logoutMutation.mutate();
+  }, [isOnline, logoutMutation.mutate]);
+
+  useEffect(() => {
+    try {
+      LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
+    } catch {
+      // Les nouvelles données de réception ne sont jamais lues depuis localStorage.
+    }
+    if (!hasActiveDeviceSession()) {
+      sessionStorage.removeItem(DEVICE_KEY);
+      sessionStorage.removeItem(ROSTER_KEY);
+      sessionStorage.removeItem(CHECKINS_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!unlocked) return;
+    const extendSession = () => {
+      if (!hasActiveDeviceSession()) {
+        lockDevice();
+        return;
+      }
+      sessionStorage.setItem(DEVICE_KEY, String(Date.now() + IDLE_LOCK_MS));
+    };
+    const timer = window.setInterval(() => {
+      if (!hasActiveDeviceSession()) lockDevice();
+    }, 30_000);
+    const activityEvents = ["pointerdown", "keydown", "touchstart"] as const;
+    activityEvents.forEach(eventName =>
+      window.addEventListener(eventName, extendSession, { passive: true })
+    );
+    return () => {
+      window.clearInterval(timer);
+      activityEvents.forEach(eventName =>
+        window.removeEventListener(eventName, extendSession)
+      );
+    };
+  }, [unlocked, lockDevice]);
+
   if (!unlocked)
     return (
       <main className="min-h-screen bg-[#2a1d15] text-[#f7ead4] px-4 py-10 flex items-center justify-center">
@@ -215,8 +287,9 @@ export default function ReceptionPage() {
             Espace Accueil
           </h1>
           <p className="text-sm text-center text-[#7c6d62] mt-3 leading-relaxed">
-            À ouvrir une première fois avec Internet sur chaque téléphone. La
-            liste sera ensuite conservée pour le scan hors connexion.
+            À ouvrir avec Internet pour préparer chaque téléphone. La session
+            hors connexion reste dans cet onglet et se verrouille après 15
+            minutes d’inactivité.
           </p>
           <form
             onSubmit={event => {
@@ -279,8 +352,7 @@ export default function ReceptionPage() {
               type="button"
               onClick={() => {
                 stopScan();
-                localStorage.removeItem(DEVICE_KEY);
-                setUnlocked(false);
+                lockDevice();
               }}
               className="rounded-full border border-[#c69a58]/50 p-2 text-[#e2c27f] hover:bg-white/10 cursor-pointer"
               aria-label="Verrouiller ce téléphone"
@@ -340,7 +412,7 @@ export default function ReceptionPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const code = window.prompt("Entrez le numéro du billet");
+                  const code = window.prompt("Entrez le code invité MM### ou le numéro du billet");
                   if (code) markArrival(code);
                 }}
                 className="rounded-xl border border-[#c69a58] text-[#855f24] py-3 font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer"
@@ -461,7 +533,7 @@ export default function ReceptionPage() {
               <input
                 value={query}
                 onChange={event => setQuery(event.target.value)}
-                placeholder="Nom ou numéro de billet"
+                placeholder="Nom, code invité ou billet"
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#e1cfb5] bg-white text-sm outline-none focus:ring-2 focus:ring-[#c69a58]"
               />
             </div>
@@ -479,7 +551,7 @@ export default function ReceptionPage() {
                     {entry.name}
                   </span>
                   <span className="font-mono text-xs text-[#855f24]">
-                    {entry.ticketCode}
+                    {entry.invitationCode || entry.ticketCode}
                   </span>
                 </div>
                 <div className="flex justify-between gap-3 mt-1 text-xs text-[#7c6d62]">
@@ -512,9 +584,10 @@ export default function ReceptionPage() {
           </div>
         </section>
         <p className="text-center text-xs text-[#7c6d62] flex items-center justify-center gap-1.5">
-          <Smartphone className="w-3.5 h-3.5" /> Pour chaque téléphone :
-          préparer la liste en ligne avant le départ, puis activer le mode avion
-          à la salle pour tester le fonctionnement hors connexion.
+          <Smartphone className="w-3.5 h-3.5" /> Préparez la liste en ligne
+          avant le départ, puis testez le mode avion; les données sont effacées
+          au verrouillage, après 15 minutes d’inactivité ou à la fermeture de
+          l’onglet.
         </p>
       </div>
     </main>

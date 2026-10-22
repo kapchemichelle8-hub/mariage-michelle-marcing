@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
+import InviteeRosterAdmin from "../components/InviteeRosterAdmin";
 
 const EVENT_LABELS: Record<string, string> = {
   civil: "Mairie",
@@ -44,6 +45,7 @@ export default function AdminPage() {
   const [filterSide, setFilterSide] = useState<"all" | "bride" | "groom">(
     "all"
   );
+  const [filterSource, setFilterSource] = useState<"all" | "code" | "historique">("all");
 
   const adminMe = trpc.admin.me.useQuery();
   const isAuthenticated = adminMe.data?.authenticated === true;
@@ -58,7 +60,10 @@ export default function AdminPage() {
   const stats = statsQuery.data;
   const rsvps = listQuery.data;
   const unassignedConfirmed = (rsvps || []).filter(
-    entry => entry.attendance === "yes" && !entry.tableNumber
+    entry =>
+      entry.responseSource === "code" &&
+      entry.attendance === "yes" &&
+      !entry.tableNumber
   );
 
   const loginMutation = trpc.admin.login.useMutation({
@@ -116,6 +121,8 @@ export default function AdminPage() {
   const handleExportCsv = () => {
     if (!rsvps?.length) return;
     const headers = [
+      "Code invité",
+      "Source",
       "Code Billet",
       "Nom",
       "Invité de",
@@ -127,6 +134,8 @@ export default function AdminPage() {
       "Date de réponse",
     ];
     const rows = rsvps.map(r => [
+      `"${r.invitationCode || ""}"`,
+      `"${r.responseSource === "code" ? "Réponse par code" : "Historique"}"`,
       `"${r.ticketCode}"`,
       `"${r.name.replace(/"/g, '""')}"`,
       `"${sideLabel(r.side)}"`,
@@ -135,7 +144,7 @@ export default function AdminPage() {
       r.attendance === "yes" ? "Oui" : "Non",
       r.guestsCount,
       `"${(r.message || "").replace(/"/g, '""')}"`,
-      `"${new Date(r.createdAt).toLocaleString("fr-FR")}"`,
+      `"${new Date(r.updatedAt ?? r.createdAt).toLocaleString("fr-FR")}"`,
     ]);
     const blob = new Blob(
       [
@@ -165,9 +174,11 @@ export default function AdminPage() {
     const search = searchTerm.toLowerCase();
     const matchesSearch =
       r.name.toLowerCase().includes(search) ||
-      r.ticketCode.toLowerCase().includes(search);
+      r.ticketCode.toLowerCase().includes(search) ||
+      (r.invitationCode || "").toLowerCase().includes(search);
     return (
       matchesSearch &&
+      (filterSource === "all" || r.responseSource === filterSource) &&
       (filterAttendance === "all" || r.attendance === filterAttendance) &&
       (filterSide === "all" || r.side === filterSide)
     );
@@ -294,32 +305,32 @@ export default function AdminPage() {
           <StatCard
             label="Total personnes"
             value={statsQuery.isLoading ? "..." : (stats?.totalGuests ?? 0)}
-            note="Convives à table"
+            note="Réponses actuelles par code"
             icon={<Users className="w-4 h-4" />}
             tone="gold"
           />
           <StatCard
-            label="Présents confirmés"
+            label="Présents confirmés par code"
             value={
               statsQuery.isLoading ? "..." : (stats?.attendingResponses ?? 0)
             }
-            note="Invitations validées"
+            note="Réponses actuelles liées au code"
             icon={<UserCheck className="w-4 h-4" />}
             tone="green"
           />
           <StatCard
-            label="Absences déclarées"
+            label="Absences par code"
             value={
               statsQuery.isLoading ? "..." : (stats?.declinedResponses ?? 0)
             }
-            note="Ne pourront pas être là"
+            note="Réponses actuelles liées au code"
             icon={<UserX className="w-4 h-4" />}
             tone="rose"
           />
           <StatCard
             label="Total réponses"
             value={statsQuery.isLoading ? "..." : (stats?.totalResponses ?? 0)}
-            note="Formulaires reçus"
+            note="Cette campagne de réinscription"
             icon={<Ticket className="w-4 h-4" />}
             tone="gold"
           />
@@ -342,13 +353,26 @@ export default function AdminPage() {
           />
         </div>
 
+        <div className="flex items-start gap-3 rounded-2xl border border-[#c69a58]/35 bg-[#fcfaf7] px-5 py-4 text-sm text-[#5a4632]">
+          <Heart className="w-4 h-4 mt-0.5 shrink-0 text-[#9d7537]" />
+          <p>
+            Les {stats?.historicalResponses ?? 0} anciennes réponses et les {stats?.historicalMessages ?? 0} anciens mots doux restent conservés et visibles; ils sont séparés des nouvelles réponses par code.
+          </p>
+        </div>
+
+        <InviteeRosterAdmin
+          onUpdated={async () => {
+            await Promise.all([statsQuery.refetch(), listQuery.refetch()]);
+          }}
+        />
+
         {unassignedConfirmed.length > 0 && (
           <section className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-950 shadow-sm">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0 text-amber-700" />
               <div>
                 <p className="font-semibold">{unassignedConfirmed.length} invité{unassignedConfirmed.length > 1 ? "s" : ""} confirmé{unassignedConfirmed.length > 1 ? "s" : ""} sans table</p>
-                <p className="text-xs mt-1 leading-relaxed">Ajoutez leur nom dans l’onglet « 🪑 Plan de table » du Google Sheet pour actualiser automatiquement leur billet.</p>
+                <p className="text-xs mt-1 leading-relaxed">Attribuez leur table par code dans le répertoire privé ci-dessus; le billet correspondant sera actualisé.</p>
                 <p className="text-xs mt-2 font-medium">{unassignedConfirmed.slice(0, 5).map(entry => entry.name).join(" · ")}{unassignedConfirmed.length > 5 ? " · …" : ""}</p>
               </div>
             </div>
@@ -381,6 +405,21 @@ export default function AdminPage() {
                     : filter === "yes"
                       ? `Présents (${stats?.attendingResponses || 0})`
                       : `Absents (${stats?.declinedResponses || 0})`}
+                </button>
+              ))}
+              <span className="w-px h-5 bg-[#ebdcc8] mx-1" />
+              {(["all", "code", "historique"] as const).map(filter => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setFilterSource(filter)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${filterSource === filter ? "bg-[#855f24] text-white" : "bg-white border border-[#ebdcc8] text-[#5a4632]"}`}
+                >
+                  {filter === "all"
+                    ? "Toutes les sources"
+                    : filter === "code"
+                      ? `Par code (${stats?.totalResponses || 0})`
+                      : `Historique (${stats?.historicalResponses || 0})`}
                 </button>
               ))}
               <span className="w-px h-5 bg-[#ebdcc8] mx-1" />
@@ -425,16 +464,25 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-[#ebdcc8]/60">
                   {filtered.map(item => (
                     <tr
-                      key={item.id}
+                      key={`${item.responseSource}-${item.id}`}
                       className="hover:bg-white/60 transition-colors"
                     >
                       <td className="py-3.5 px-3">
-                        <Link
-                          href={`/billet/${item.ticketCode}`}
-                          className="font-mono font-bold text-[#855f24] hover:underline"
-                        >
-                          {item.ticketCode}
-                        </Link>
+                        {item.responseSource === "code" ? (
+                          <Link
+                            href={`/billet/${item.ticketCode}`}
+                            className="font-mono font-bold text-[#855f24] hover:underline"
+                          >
+                            {item.invitationCode || item.ticketCode}
+                          </Link>
+                        ) : (
+                          <span className="font-mono font-bold text-[#7c6d62]">
+                            {item.ticketCode}
+                          </span>
+                        )}
+                        <span className="block mt-1 text-[9px] uppercase tracking-wider text-muted-foreground">
+                          {item.responseSource === "code" ? "Réponse par code" : "Historique conservé"}
+                        </span>
                       </td>
                       <td className="py-3.5 px-3">
                         <div className="font-medium text-[#2d241e]">
@@ -472,7 +520,7 @@ export default function AdminPage() {
                         )}
                       </td>
                       <td className="py-3.5 px-3 text-xs text-muted-foreground">
-                        {new Date(item.createdAt).toLocaleDateString("fr-FR", {
+                        {new Date(item.updatedAt ?? item.createdAt).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "short",
                           hour: "2-digit",
@@ -481,28 +529,30 @@ export default function AdminPage() {
                       </td>
                       <td className="py-3.5 px-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              item.message && deleteMessage(item.id, item.name)
-                            }
-                            disabled={
-                              !item.message || deleteMessageMutation.isPending
-                            }
-                            className="p-2 rounded-lg text-[#9d7537] hover:bg-[#f4ede1] disabled:opacity-30 cursor-pointer"
-                            title="Supprimer le mot d'or"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteRsvp(item.id, item.name)}
-                            disabled={deleteRsvpMutation.isPending}
-                            className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer"
-                            title="Supprimer la confirmation"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {item.messageSource === "code" && item.messageId ? (
+                            <button
+                              type="button"
+                              onClick={() => deleteMessage(item.messageId!, item.name)}
+                              disabled={deleteMessageMutation.isPending}
+                              className="p-2 rounded-lg text-[#9d7537] hover:bg-[#f4ede1] disabled:opacity-30 cursor-pointer"
+                              title="Supprimer ce nouveau mot doux"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          ) : item.messageSource === "historique" ? (
+                            <span className="px-2 text-[9px] text-[#7c6d62]">Conservé</span>
+                          ) : null}
+                          {item.responseSource === "code" && (
+                            <button
+                              type="button"
+                              onClick={() => deleteRsvp(item.id, item.name)}
+                              disabled={deleteRsvpMutation.isPending}
+                              className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer"
+                              title="Supprimer la réponse par code"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
