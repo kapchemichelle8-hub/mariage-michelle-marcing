@@ -24,7 +24,7 @@ export default function TicketPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#faf7f2] py-12 px-4 flex flex-col justify-center items-center">
+    <div className="min-h-screen bg-[#faf7f2] py-12 px-4 flex flex-col justify-center items-center print:min-h-0 print:bg-white print:p-0 print:block">
       <div className="max-w-xl w-full mb-6 print:hidden">
         <Link
           href="/"
