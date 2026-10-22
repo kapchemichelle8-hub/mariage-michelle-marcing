@@ -14,13 +14,9 @@ Ce document récapitule les modifications apportées pour protéger les statisti
 
 ---
 
-## 2. Mot de Passe de l'Espace Mariés
+## 2. Accès de l'Espace Mariés
 
-Pour que madame et monsieur puissent consulter les réponses en toute simplicité sans compte complexe, l'accès se fait directement avec le mot de passe partagé :
-
-```text
-mariage2026
-```
+Pour que madame et monsieur puissent consulter les réponses en toute simplicité sans compte complexe, l'accès se fait directement avec le mot de passe des mariés, conservé uniquement dans la configuration sécurisée du site.
 
 L'écran de connexion est accessible via le bouton discret **« Espace Mariés »** présent en haut à droite de la barre de navigation et en pied de page. Une fois le mot de passe validé, un cookie de session sécurisé est déposé sur le navigateur et donne accès :
 - Au décompte précis du nombre total de convives à table ;

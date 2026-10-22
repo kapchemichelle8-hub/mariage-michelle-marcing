@@ -7,6 +7,7 @@ import * as db from "./db";
 import {
   allowAdminLoginAttempt,
   allowInvitationAttempt,
+  allowReceptionLoginAttempt,
   isInvitationCodeFormatValid,
   normalizeInvitationCode,
 } from "./invitationCodes";
@@ -17,27 +18,46 @@ import { publicProcedure, router } from "./_core/trpc";
 
 const ADMIN_SESSION_COOKIE = "wedding_admin_session_v2";
 const LEGACY_ADMIN_SESSION_COOKIE = "wedding_admin_session";
+const RECEPTION_SESSION_COOKIE = "wedding_reception_session_v1";
 
-function adminSessionToken() {
+function sessionToken(scope: "admin" | "reception") {
   return createHmac("sha256", ENV.cookieSecret)
-    .update("michelle-marcing-admin-session")
+    .update(`michelle-marcing-${scope}-session`)
     .digest("hex");
 }
 
-function isAdminSessionValid(req: { headers: { cookie?: string } }) {
-  if (!ENV.adminPassword || !ENV.cookieSecret) return false;
-  const token = parseCookie(req.headers.cookie || "")[ADMIN_SESSION_COOKIE];
+function isSessionValid(
+  req: { headers: { cookie?: string } },
+  cookieName: string,
+  scope: "admin" | "reception"
+) {
+  if (!ENV.cookieSecret) return false;
+  const token = parseCookie(req.headers.cookie || "")[cookieName];
   if (!token) return false;
 
-  const expected = Buffer.from(adminSessionToken());
+  const expected = Buffer.from(sessionToken(scope));
   const received = Buffer.from(token);
   return (
     received.length === expected.length && timingSafeEqual(received, expected)
   );
 }
 
+function isAdminSessionValid(req: { headers: { cookie?: string } }) {
+  return isSessionValid(req, ADMIN_SESSION_COOKIE, "admin");
+}
+
+function isReceptionSessionValid(req: { headers: { cookie?: string } }) {
+  return isSessionValid(req, RECEPTION_SESSION_COOKIE, "reception");
+}
+
 function setAdminSession(res: any, req: any) {
-  res.cookie(ADMIN_SESSION_COOKIE, adminSessionToken(), {
+  res.cookie(ADMIN_SESSION_COOKIE, sessionToken("admin"), {
+    ...getSessionCookieOptions(req),
+  });
+}
+
+function setReceptionSession(res: any, req: any) {
+  res.cookie(RECEPTION_SESSION_COOKIE, sessionToken("reception"), {
     ...getSessionCookieOptions(req),
   });
 }
@@ -53,11 +73,28 @@ function clearAdminSession(res: any, req: any) {
   });
 }
 
+function clearReceptionSession(res: any, req: any) {
+  res.clearCookie(RECEPTION_SESSION_COOKIE, {
+    ...getSessionCookieOptions(req),
+    maxAge: 0,
+  });
+}
+
 const adminSessionProcedure = publicProcedure.use(({ ctx, next }) => {
   if (!isAdminSessionValid(ctx.req)) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Mot de passe administrateur requis",
+    });
+  }
+  return next({ ctx });
+});
+
+const receptionSessionProcedure = publicProcedure.use(({ ctx, next }) => {
+  if (!isReceptionSessionValid(ctx.req)) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Accès équipe d’accueil requis",
     });
   }
   return next({ ctx });
@@ -87,6 +124,19 @@ function enforceAdminLoginAttemptLimit(req: {
 }) {
   const clientKey = req.ip || req.socket?.remoteAddress || "unknown-client";
   if (!allowAdminLoginAttempt(clientKey)) {
+    throw new TRPCError({
+      code: "TOO_MANY_REQUESTS",
+      message: "Trop de tentatives de connexion. Réessayez dans 15 minutes.",
+    });
+  }
+}
+
+function enforceReceptionLoginAttemptLimit(req: {
+  ip?: string;
+  socket?: { remoteAddress?: string };
+}) {
+  const clientKey = req.ip || req.socket?.remoteAddress || "unknown-client";
+  if (!allowReceptionLoginAttempt(clientKey)) {
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
       message: "Trop de tentatives de connexion. Réessayez dans 15 minutes.",
@@ -256,7 +306,36 @@ export const appRouter = router({
   }),
 
   reception: router({
-    roster: adminSessionProcedure.query(async () => {
+    login: publicProcedure
+      .input(
+        z.object({
+          password: z.string().min(1, "Veuillez entrer le mot de passe"),
+        })
+      )
+      .mutation(({ input, ctx }) => {
+        enforceReceptionLoginAttemptLimit(ctx.req);
+        const received = Buffer.from(input.password);
+        const expected = Buffer.from(ENV.receptionPassword);
+        const isValid =
+          received.length === expected.length &&
+          timingSafeEqual(received, expected);
+        if (!isValid) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Mot de passe incorrect",
+          });
+        }
+        setReceptionSession(ctx.res, ctx.req);
+        return { success: true } as const;
+      }),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      clearReceptionSession(ctx.res, ctx.req);
+      return { success: true } as const;
+    }),
+    me: publicProcedure.query(({ ctx }) => ({
+      authenticated: isReceptionSessionValid(ctx.req),
+    })),
+    roster: receptionSessionProcedure.query(async () => {
       const entries = await db.getAdminRsvps();
       return entries.map(
         ({

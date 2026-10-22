@@ -7,6 +7,7 @@ const ADMIN_LOGIN_LIMIT = 5;
 type AttemptStore = Map<string, number[]>;
 const invitationAttemptsByClient: AttemptStore = new Map();
 const adminLoginAttemptsByClient: AttemptStore = new Map();
+const receptionLoginAttemptsByClient: AttemptStore = new Map();
 
 export function normalizeInvitationCode(value: string) {
   return value.trim().toUpperCase();
@@ -70,12 +71,27 @@ export function allowAdminLoginAttempt(clientKey: string, now = Date.now()) {
   );
 }
 
+/** Process-local throttle for reception-team password attempts. */
+export function allowReceptionLoginAttempt(clientKey: string, now = Date.now()) {
+  return allowAttempt(
+    receptionLoginAttemptsByClient,
+    clientKey,
+    now,
+    ADMIN_LOGIN_WINDOW_MS_VALUE,
+    ADMIN_LOGIN_LIMIT
+  );
+}
+
 export function resetInvitationAttemptLimitsForTests() {
   invitationAttemptsByClient.clear();
 }
 
 export function resetAdminLoginAttemptLimitsForTests() {
   adminLoginAttemptsByClient.clear();
+}
+
+export function resetReceptionLoginAttemptLimitsForTests() {
+  receptionLoginAttemptsByClient.clear();
 }
 
 export const INVITATION_LOOKUP_LIMIT = LOOKUP_LIMIT;

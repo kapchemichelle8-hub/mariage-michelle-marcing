@@ -94,7 +94,7 @@ export default function ReceptionPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const scanControlsRef = useRef<{ stop: () => void } | null>(null);
 
-  const login = trpc.admin.login.useMutation({
+  const login = trpc.reception.login.useMutation({
     onSuccess: async () => {
       sessionStorage.setItem(DEVICE_KEY, String(Date.now() + IDLE_LOCK_MS));
       setUnlocked(true);
@@ -104,7 +104,7 @@ export default function ReceptionPage() {
     },
     onError: error => toast.error(error.message || "Code incorrect."),
   });
-  const logoutMutation = trpc.admin.logout.useMutation({ retry: false });
+  const logoutMutation = trpc.reception.logout.useMutation({ retry: false });
   const rosterQuery = trpc.reception.roster.useQuery(undefined, {
     enabled: unlocked && isOnline,
     retry: false,

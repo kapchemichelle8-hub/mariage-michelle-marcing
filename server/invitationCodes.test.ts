@@ -4,12 +4,14 @@ import {
   ADMIN_LOGIN_WINDOW_MS,
   allowAdminLoginAttempt,
   allowInvitationAttempt,
+  allowReceptionLoginAttempt,
   isInvitationCodeFormatValid,
   INVITATION_LOOKUP_LIMIT,
   INVITATION_LOOKUP_WINDOW_MS,
   normalizeInvitationCode,
   resetAdminLoginAttemptLimitsForTests,
   resetInvitationAttemptLimitsForTests,
+  resetReceptionLoginAttemptLimitsForTests,
 } from "./invitationCodes";
 
 describe("invitation code format", () => {
@@ -83,5 +85,26 @@ describe("administrator login attempt limit", () => {
       allowAdminLoginAttempt("shared-client", start + i);
     }
     expect(allowInvitationAttempt("shared-client", start + 20)).toBe(true);
+  });
+});
+
+describe("reception login attempt limit", () => {
+  beforeEach(() => {
+    resetAdminLoginAttemptLimitsForTests();
+    resetReceptionLoginAttemptLimitsForTests();
+  });
+
+  it("keeps the reception password counter separate from the married-area counter", () => {
+    const start = 1_800_000_000_000;
+    for (let i = 0; i < ADMIN_LOGIN_ATTEMPT_LIMIT; i += 1) {
+      expect(allowReceptionLoginAttempt("shared-client", start + i)).toBe(true);
+    }
+    expect(
+      allowReceptionLoginAttempt(
+        "shared-client",
+        start + ADMIN_LOGIN_ATTEMPT_LIMIT
+      )
+    ).toBe(false);
+    expect(allowAdminLoginAttempt("shared-client", start + 20)).toBe(true);
   });
 });

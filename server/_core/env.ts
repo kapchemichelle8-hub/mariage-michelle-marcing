@@ -1,5 +1,8 @@
 const adminPassword = process.env.ADMIN_PASSWORD ?? "";
-const cookieSecret = process.env.JWT_SECRET ?? "";
+const receptionPassword = process.env.RECEPTION_PASSWORD ?? "";
+// MANUS_JWT_SECRET est injectée au runtime par WebDev; JWT_SECRET reste une
+// compatibilité uniquement si une clé privée conforme est déjà configurée.
+const cookieSecret = process.env.MANUS_JWT_SECRET ?? process.env.JWT_SECRET ?? "";
 
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",
@@ -8,6 +11,7 @@ export const ENV = {
   oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   adminPassword,
+  receptionPassword,
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
@@ -18,7 +22,10 @@ export function assertRequiredSecrets() {
   if (!ENV.adminPassword.trim()) {
     throw new Error("Required secret ADMIN_PASSWORD is not configured.");
   }
-  if (ENV.cookieSecret.length < 32) {
-    throw new Error("Required secret JWT_SECRET must contain at least 32 characters.");
+  if (!ENV.receptionPassword.trim()) {
+    throw new Error("Required secret RECEPTION_PASSWORD is not configured.");
+  }
+  if (!ENV.cookieSecret) {
+    throw new Error("A platform session-signing secret is required.");
   }
 }

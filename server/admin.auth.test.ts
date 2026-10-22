@@ -34,6 +34,7 @@ function createMockContext(cookieHeader = ""): {
 describe("admin security & password login", () => {
   beforeEach(() => {
     ENV.adminPassword = "unit-test-admin-password";
+    ENV.receptionPassword = "unit-test-reception-password";
     ENV.cookieSecret = "unit-test-signing-key-that-is-at-least-32-characters";
     resetAdminLoginAttemptLimitsForTests();
   });
@@ -42,8 +43,11 @@ describe("admin security & password login", () => {
     ENV.adminPassword = "";
     expect(assertRequiredSecrets).toThrow(/ADMIN_PASSWORD/);
     ENV.adminPassword = "unit-test-admin-password";
-    ENV.cookieSecret = "short";
-    expect(assertRequiredSecrets).toThrow(/JWT_SECRET/);
+    ENV.receptionPassword = "";
+    expect(assertRequiredSecrets).toThrow(/RECEPTION_PASSWORD/);
+    ENV.receptionPassword = "unit-test-reception-password";
+    ENV.cookieSecret = "";
+    expect(assertRequiredSecrets).toThrow(/platform session-signing secret/);
     ENV.cookieSecret = "unit-test-signing-key-that-is-at-least-32-characters";
     expect(assertRequiredSecrets).not.toThrow();
   });
