@@ -7,7 +7,7 @@ export default function PlanPage() {
   const code = (params?.code || "").trim();
   const { data: ticket, isLoading, error } = trpc.wedding.getTicket.useQuery(
     { code },
-    { enabled: Boolean(code && code.length >= 3), retry: false }
+    { enabled: /^[A-Za-z0-9_-]{32}$/.test(code), retry: false }
   );
   const assignment = ticket?.seatAssignment;
 

@@ -14,7 +14,7 @@ export default function TicketPage() {
   } = trpc.wedding.getTicket.useQuery(
     { code },
     {
-      enabled: Boolean(code && code.length >= 3),
+      enabled: /^[A-Za-z0-9_-]{32}$/.test(code),
       retry: (failureCount, err) => {
         // Ne pas insister si le serveur confirme que le billet n'existe pas
         if ((err as any)?.data?.code === "NOT_FOUND") return false;

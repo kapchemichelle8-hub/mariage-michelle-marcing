@@ -221,18 +221,12 @@ export const appRouter = router({
           ticket.invitationId == null ||
           ticket.attendance !== "yes"
         ) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Billet introuvable ou lien historique désactivé.",
-          });
+          return null;
         }
 
         const invitation = await db.getInvitationById(ticket.invitationId);
         if (!invitation) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Billet introuvable ou lien historique désactivé.",
-          });
+          return null;
         }
         const assignment =
           invitation.tableNumber && invitation.tableVirtue

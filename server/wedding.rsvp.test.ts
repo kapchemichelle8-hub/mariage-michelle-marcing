@@ -156,6 +156,7 @@ describe("wedding invitation code flow", () => {
       events: "civil",
       seatAssignment: { tableNumber: "4", tableVirtue: "Sagesse" },
     });
+    if (!result) throw new Error("Le billet de test est absent");
     expect(Object.keys(result).sort()).toEqual(
       [
         "attendance",
@@ -178,9 +179,7 @@ describe("wedding invitation code flow", () => {
     } as Awaited<ReturnType<typeof db.getRsvpByTicketCode>>);
     const caller = appRouter.createCaller(createMockContext());
 
-    await expect(caller.wedding.getTicket({ code: "001" })).rejects.toMatchObject({
-      code: "NOT_FOUND",
-    });
+    await expect(caller.wedding.getTicket({ code: "001" })).resolves.toBeNull();
     expect(db.getInvitationById).not.toHaveBeenCalled();
   });
 });
