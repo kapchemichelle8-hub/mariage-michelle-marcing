@@ -68,11 +68,12 @@ export const WEDDING_CONFIG = {
       start: "20 h 00",
       end: "",
       title: "La soirée",
-      location: "Salle de réception — adresse communiquée bientôt",
+      location: "Hôtel Angelina — Kotto Mbangué, Douala (4Q33+7C)",
+      mapQuery: "4Q33+7C, Kotto Mbangué, Douala, Cameroun",
       description:
         "Place à la fête : un bon repas, de la musique, des danses et beaucoup d’amour jusqu’au bout de la nuit.",
       icon: "party",
-      confirmed: false,
+      confirmed: true,
     },
   ],
 };
