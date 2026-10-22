@@ -7,7 +7,6 @@ import {
   MapPin,
   Share2,
 } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
@@ -45,7 +44,6 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
         .map(value => value.trim())
         .filter(Boolean)
     : [];
-  const qrValue = `${window.location.origin}/plan/${ticket.ticketCode}`;
 
   const makePng = async () => {
     if (!ticketRef.current) throw new Error("Billet indisponible");
@@ -206,22 +204,6 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
             </div>
           </section>
 
-          {ticket.seatAssignment ? (
-            <section className="ticket-content-block flex items-center justify-between gap-3 rounded-xl border border-[#c69a58]/60 bg-[#2a1d15] p-3.5 text-[#f7ead4]">
-              <div className="min-w-0">
-                <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#e2c27f]">
-                  Votre table
-                </span>
-                <p className="mt-0.5 font-serif-luxury text-xl font-bold leading-tight">
-                  Table {ticket.seatAssignment.tableNumber}
-                </p>
-                <p className="mt-0.5 break-words font-script text-2xl leading-tight text-[#e2c27f]">
-                  {ticket.seatAssignment.tableVirtue}
-                </p>
-              </div>
-            </section>
-          ) : null}
-
           <section className="ticket-content-block rounded-xl border border-[#c69a58]/30 bg-[#fbf8f3] p-3">
             <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#855f24]">
               <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -253,7 +235,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
           </section>
         </div>
 
-        <footer className="ticket-footer flex items-end justify-between gap-3 border-t border-dashed border-[#c69a58]/50 pt-3">
+        <footer className="ticket-footer border-t border-dashed border-[#c69a58]/50 pt-3">
           <div className="min-w-0">
             <span className="block text-[9px] uppercase tracking-wider text-[#7c6d62]">Code invité</span>
             <span className="mt-0.5 block break-all font-mono text-xl font-bold tracking-[0.14em] text-[#2d241e]">
@@ -263,22 +245,6 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
               <Heart className="h-3.5 w-3.5 fill-[#c69a58]/30" aria-hidden="true" />
               Merci d’être là pour notre oui.
             </p>
-          </div>
-          <div className="shrink-0 text-center">
-            <div className="rounded-xl border border-[#c69a58]/50 bg-white p-1.5">
-              <QRCodeSVG
-                value={qrValue}
-                size={88}
-                level="M"
-                bgColor="#ffffff"
-                fgColor="#2d241e"
-                includeMargin={false}
-                aria-label={`QR code de placement pour le billet ${ticket.ticketCode}`}
-              />
-            </div>
-            <span className="mt-1 block text-[8px] font-semibold uppercase tracking-wider text-[#855f24]">
-              Scanner pour ma table
-            </span>
           </div>
         </footer>
       </article>
