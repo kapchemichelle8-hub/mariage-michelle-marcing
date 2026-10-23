@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Download,
-  KeyRound,
   Loader2,
   LockKeyhole,
   Heart,
@@ -22,6 +21,7 @@ import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
 import InviteeRosterAdmin from "../components/InviteeRosterAdmin";
 import ScheduleTimesAdmin from "../components/ScheduleTimesAdmin";
+import PasswordField from "../components/PasswordField";
 
 const EVENT_LABELS: Record<string, string> = {
   civil: "Mariage civil",
@@ -218,17 +218,12 @@ export default function AdminPage() {
               mariés.
             </p>
             <form onSubmit={handleLogin} className="space-y-4">
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-[#9d7537] absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  autoFocus
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Mot de passe"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#ebdcc8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c69a58]"
-                />
-              </div>
+              <PasswordField
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoFocus
+                label="Mot de passe de l’espace mariés"
+              />
               <button
                 type="submit"
                 disabled={loginMutation.isPending}

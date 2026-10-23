@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Smartphone,
   StopCircle,
-  UserRoundCheck,
   Wifi,
   WifiOff,
 } from "lucide-react";
@@ -17,6 +16,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
+import PasswordField from "../components/PasswordField";
+import { parseReceptionQr, tableLabel } from "../lib/receptionQr";
 
 type RosterEntry = {
   id: number;
@@ -32,6 +33,11 @@ type RosterEntry = {
 };
 
 type CheckIn = { at: string; ticketCode: string };
+type ScanResult = {
+  ticketCode: string;
+  tableNumber: string | null;
+  tableVirtue: string | null;
+};
 const ROSTER_KEY = "michelle-marcing-reception-roster-v2";
 const CHECKINS_KEY = "michelle-marcing-reception-checkins-v2";
 const DEVICE_KEY = "michelle-marcing-reception-device-unlocked-v2";
@@ -61,17 +67,6 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-function extractTicketCode(raw: string) {
-  const value = raw.trim();
-  if (!value) return "";
-  try {
-    const url = new URL(value);
-    return url.pathname.split("/").filter(Boolean).pop() || value;
-  } catch {
-    return value.split("/").filter(Boolean).pop() || value;
-  }
-}
-
 const eventLabel: Record<string, string> = {
   civil: "Mariage civil",
   church: "Bénédiction nuptiale",
@@ -88,7 +83,7 @@ export default function ReceptionPage() {
     readJson(CHECKINS_KEY, {})
   );
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<RosterEntry | null>(null);
+  const [selected, setSelected] = useState<ScanResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -147,34 +142,44 @@ export default function ReceptionPage() {
   }, [query, roster]);
 
   const markArrival = (rawCode: string) => {
-    const code = extractTicketCode(rawCode).trim();
+    const scan = parseReceptionQr(rawCode);
     const found = roster.find(
       entry =>
-        entry.ticketCode === code ||
-        entry.invitationCode?.toUpperCase() === code.toUpperCase()
+        entry.ticketCode === scan.ticketCode ||
+        entry.invitationCode?.toUpperCase() === scan.ticketCode.toUpperCase()
     );
-    if (!found) {
+    const result = found
+      ? {
+          ticketCode: found.ticketCode,
+          tableNumber: found.tableNumber ?? scan.tableNumber,
+          tableVirtue: found.tableVirtue ?? scan.tableVirtue,
+        }
+      : scan.tableNumber || scan.tableVirtue
+        ? scan
+        : null;
+
+    if (!result) {
       setSelected(null);
       toast.error(
-        `Billet ${code || "inconnu"} introuvable dans la liste préchargée.`
+        `Billet ${scan.ticketCode || "inconnu"} introuvable dans la liste préchargée.`
       );
       return;
     }
-    setSelected(found);
-    if (found.attendance !== "yes") {
+    setSelected(result);
+    if (found && found.attendance !== "yes") {
       toast.warning(`${found.name} avait indiqué ne pas pouvoir venir.`);
       return;
     }
     const next = {
       ...checkins,
-      [found.ticketCode]: {
+      [result.ticketCode]: {
         at: new Date().toISOString(),
-        ticketCode: found.ticketCode,
+        ticketCode: result.ticketCode,
       },
     };
     setCheckins(next);
     sessionStorage.setItem(CHECKINS_KEY, JSON.stringify(next));
-    toast.success(`${found.name} est marqué(e) comme arrivé(e).`);
+    toast.success(`Table trouvée : ${tableLabel(result.tableNumber, result.tableVirtue)}.`);
   };
 
   const startScan = async () => {
@@ -299,12 +304,10 @@ export default function ReceptionPage() {
             className="mt-6 space-y-3"
           >
             <label className="text-sm font-semibold block">Code d’accès</label>
-            <input
-              type="password"
+            <PasswordField
               value={password}
               onChange={event => setPassword(event.target.value)}
-              placeholder="Mot de passe"
-              className="w-full rounded-xl border border-[#e1cfb5] px-4 py-3 outline-none focus:ring-2 focus:ring-[#c69a58]"
+              label="Mot de passe de l’équipe accueil"
             />
             <button
               disabled={login.isPending}
@@ -485,35 +488,16 @@ export default function ReceptionPage() {
 
         {selected && (
           <section
-            className={`rounded-[1.6rem] p-5 border-2 shadow-sm ${selected.attendance === "yes" ? "bg-[#f8f5e9] border-[#c69a58]" : "bg-[#f7e8e3] border-[#d79b8a]"}`}
+            className="rounded-[1.6rem] p-5 border-2 border-[#c69a58] bg-[#f8f5e9] shadow-sm"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-[#855f24] font-semibold">
-                  Résultat du scan
-                </p>
-                <h2 className="font-serif-luxury text-3xl font-bold mt-1">
-                  {selected.name}
-                </h2>
-                <p className="text-sm mt-1">
-                  Billet <strong>{selected.ticketCode}</strong> ·{" "}
-                  {selected.guestsCount}{" "}
-                  {selected.guestsCount > 1 ? "personnes" : "personne"}
-                </p>
-                <p className="text-sm mt-2">
-                  {selected.events
-                    ?.split(",")
-                    .map(event => eventLabel[event] || event)
-                    .join(" · ") || "Moment non précisé"}
-                </p>
-              </div>
-              <div className="rounded-full bg-white/80 p-3">
-                {checkins[selected.ticketCode] ? (
-                  <UserRoundCheck className="w-7 h-7 text-[#7b8c4b]" />
-                ) : (
-                  <Search className="w-7 h-7 text-[#9d7537]" />
-                )}
-              </div>
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#855f24] font-semibold">
+                Table trouvée
+              </p>
+              <h2 className="font-serif-luxury text-3xl font-bold mt-2 text-[#2d241e]">
+                {tableLabel(selected.tableNumber, selected.tableVirtue)}
+              </h2>
+              {/* Le plan 2D de la salle sera inséré ici lorsqu’il sera fourni. */}
             </div>
           </section>
         )}

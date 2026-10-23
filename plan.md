@@ -30,6 +30,8 @@ L’espace mariés comprend également un petit panneau « Horaires du programme
 
 Le contrôle de consommation couple est conditionné à l’existence d’un lien partenaire valide. Une invitation individuelle ne peut donc pas être refusée à cause d’un ancien marqueur de consommation couple résiduel.
 
+Pour l’équipe d’accueil, le QR imprimé sur un nouveau billet utilise un format compact `MMQR1` contenant le jeton du billet et l’affectation de table. Le téléphone peut ainsi afficher la table sans réseau; les anciens QR URL continuent de fonctionner lorsque le roster a été préparé en ligne. Après scan, l’écran reste volontairement court: « Table trouvée », puis le nom de table, avec un emplacement réservé au futur plan 2D.
+
 ## Style et interaction
 
 Réutiliser l’identité existante du mariage : fond ivoire, brun profond, accents or mat, typographies déjà installées et ton chaleureux. Le formulaire devient progressif : saisir `MM001`, confirmer la reconnaissance, puis répondre. Le style et les autres sections du site restent inchangés.

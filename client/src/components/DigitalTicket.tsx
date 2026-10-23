@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { WEDDING_CONFIG } from "../weddingConfig";
+import { createReceptionQr } from "../lib/receptionQr";
 
 export interface TicketData {
   ticketCode: string;
@@ -51,7 +52,11 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
         .map(value => value.trim())
         .filter(Boolean)
     : [];
-  const qrValue = `${window.location.origin}/plan/${ticket.ticketCode}`;
+  const qrValue = createReceptionQr({
+    ticketCode: ticket.ticketCode,
+    tableNumber: ticket.seatAssignment?.tableNumber ?? null,
+    tableVirtue: ticket.seatAssignment?.tableVirtue ?? null,
+  });
 
   const makePng = async () => {
     if (!ticketRef.current) throw new Error("Billet indisponible");
