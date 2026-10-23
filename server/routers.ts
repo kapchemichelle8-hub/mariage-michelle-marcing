@@ -105,6 +105,10 @@ const invitationCodeSchema = z
   .transform(normalizeInvitationCode)
   .refine(isInvitationCodeFormatValid, "Code invité invalide.");
 
+const eventTimeSchema = z
+  .string()
+  .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Choisissez une heure valide.");
+
 function enforceInvitationAttemptLimit(req: {
   ip?: string;
   socket?: { remoteAddress?: string };
@@ -183,6 +187,7 @@ export const appRouter = router({
 
   wedding: router({
     getMessages: publicProcedure.query(async () => db.getApprovedMessages()),
+    getSchedule: publicProcedure.query(async () => db.getWeddingSchedule()),
 
     lookupInvitationCode: publicProcedure
       .input(z.object({ code: invitationCodeSchema }))
@@ -450,6 +455,21 @@ export const appRouter = router({
     me: publicProcedure.query(({ ctx }) => ({
       authenticated: isAdminSessionValid(ctx.req),
     })),
+    getSchedule: adminSessionProcedure.query(async () =>
+      db.getWeddingScheduleForAdmin()
+    ),
+    updateSchedule: adminSessionProcedure
+      .input(
+        z.object({
+          civil: eventTimeSchema,
+          church: eventTimeSchema,
+          party: eventTimeSchema,
+        })
+      )
+      .mutation(async ({ input }) => ({
+        success: true as const,
+        schedule: await db.updateWeddingSchedule(input),
+      })),
     listRsvps: adminSessionProcedure.query(async () => db.getAdminRsvps()),
     stats: adminSessionProcedure.query(async () => db.getAdminWeddingStats()),
     listInvitations: adminSessionProcedure.query(async () =>

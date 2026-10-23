@@ -26,6 +26,8 @@ Le roster de réception reste utilisable hors connexion dans l’onglet prépar�
 
 L’application sera déployée et vérifiée sur la base privée avant le retrait de la permission `anyone:reader`. Les droits nominativement accordés aux collaborateurs du classeur seront conservés. La colonne des codes sera écrite seulement après restriction du classeur afin de ne pas exposer temporairement les nouveaux codes.
 
+L’espace mariés comprend également un petit panneau « Horaires du programme » protégé par la session administrateur. Il permet de modifier séparément l’heure du mariage civil, de la bénédiction nuptiale et de la soirée avec des champs horaires simples. Les valeurs sont persistées dans une table dédiée, validées côté serveur et réutilisées par le programme public, le formulaire RSVP et le billet numérique; les horaires par défaut restent disponibles si la base est momentanément indisponible.
+
 ## Style et interaction
 
 Réutiliser l’identité existante du mariage : fond ivoire, brun profond, accents or mat, typographies déjà installées et ton chaleureux. Le formulaire devient progressif : saisir `MM001`, confirmer la reconnaissance, puis répondre. Le style et les autres sections du site restent inchangés.

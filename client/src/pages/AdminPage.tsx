@@ -21,6 +21,7 @@ import { Link } from "wouter";
 import { toast } from "sonner";
 import { WEDDING_CONFIG } from "../weddingConfig";
 import InviteeRosterAdmin from "../components/InviteeRosterAdmin";
+import ScheduleTimesAdmin from "../components/ScheduleTimesAdmin";
 
 const EVENT_LABELS: Record<string, string> = {
   civil: "Mariage civil",
@@ -359,6 +360,8 @@ export default function AdminPage() {
             Les {stats?.historicalResponses ?? 0} anciennes réponses et les {stats?.historicalMessages ?? 0} anciens mots doux restent conservés et visibles; ils sont séparés des nouvelles réponses par code.
           </p>
         </div>
+
+        <ScheduleTimesAdmin />
 
         <InviteeRosterAdmin
           onUpdated={async () => {

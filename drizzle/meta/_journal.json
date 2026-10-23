@@ -71,6 +71,13 @@
       "when": 1792752146468,
       "tag": "0009_orange_queen_noir",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1792752960968,
+      "tag": "0010_thick_sebastian_shaw",
+      "breakpoints": true
     }
   ]
 }

@@ -69,6 +69,13 @@ export const weddingTables = mysqlTable("wedding_tables", {
   tableVirtue: varchar("tableVirtue", { length: 160 }).notNull(),
 });
 
+/** Private settings for the three public programme times. */
+export const weddingEventTimes = mysqlTable("wedding_event_times", {
+  eventId: varchar("eventId", { length: 16 }).primaryKey(),
+  timeValue: varchar("timeValue", { length: 5 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 /** Private snapshot that keeps legacy numeric tickets usable after sheet privacy changes. */
 export const legacySeatPlan = mysqlTable(
   "legacy_seat_plan",

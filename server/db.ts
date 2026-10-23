@@ -9,6 +9,7 @@ import {
   Rsvp,
   rsvps,
   users,
+  weddingEventTimes,
   weddingTables,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
@@ -16,6 +17,18 @@ import { findSeatAssignment, normalizeGuestName } from "./seatPlan";
 import type { SeatAssignment } from "./seatPlan";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+
+const DEFAULT_EVENT_TIMES = {
+  civil: "13:00",
+  church: "15:00",
+  party: "20:00",
+} as const;
+type WeddingEventId = keyof typeof DEFAULT_EVENT_TIMES;
+
+function formatEventTime(value: string) {
+  const [hours, minutes] = value.split(":");
+  return `${Number(hours)} h ${minutes}`;
+}
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -147,6 +160,55 @@ export async function getWeddingTables() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(weddingTables).orderBy(asc(weddingTables.tableNumber));
+}
+
+export async function getWeddingSchedule() {
+  const db = await getDb();
+  const values: Record<WeddingEventId, string> = { ...DEFAULT_EVENT_TIMES };
+  if (db) {
+    const rows = await db.select().from(weddingEventTimes);
+    for (const row of rows) {
+      if (row.eventId in values && /^\d{2}:\d{2}$/.test(row.timeValue)) {
+        values[row.eventId as WeddingEventId] = row.timeValue;
+      }
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(values).map(([eventId, value]) => [
+      eventId,
+      formatEventTime(value),
+    ])
+  ) as Record<WeddingEventId, string>;
+}
+
+export async function getWeddingScheduleForAdmin() {
+  const db = await getDb();
+  const values: Record<WeddingEventId, string> = { ...DEFAULT_EVENT_TIMES };
+  if (db) {
+    const rows = await db.select().from(weddingEventTimes);
+    for (const row of rows) {
+      if (row.eventId in values && /^\d{2}:\d{2}$/.test(row.timeValue)) {
+        values[row.eventId as WeddingEventId] = row.timeValue;
+      }
+    }
+  }
+  return values;
+}
+
+export async function updateWeddingSchedule(
+  values: Record<WeddingEventId, string>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Base de données indisponible");
+  for (const eventId of Object.keys(DEFAULT_EVENT_TIMES) as WeddingEventId[]) {
+    await db
+      .insert(weddingEventTimes)
+      .values({ eventId, timeValue: values[eventId] })
+      .onDuplicateKeyUpdate({
+        set: { timeValue: values[eventId], updatedAt: new Date() },
+      });
+  }
+  return getWeddingScheduleForAdmin();
 }
 
 export async function assignInvitationTable(

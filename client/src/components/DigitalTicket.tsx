@@ -10,6 +10,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import { WEDDING_CONFIG } from "../weddingConfig";
 
 export interface TicketData {
@@ -39,6 +40,11 @@ const A4_PAGE = { width: 595.28, height: 841.89 };
 export function DigitalTicket({ ticket }: { ticket: TicketData }) {
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const scheduleQuery = trpc.wedding.getSchedule.useQuery(undefined, {
+    staleTime: 30_000,
+    retry: false,
+  });
+  const scheduleTimes = scheduleQuery.data;
   const selectedEventKeys = ticket.events
     ? ticket.events
         .split(",")
@@ -172,7 +178,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
             <div className="ticket-content-block rounded-xl border border-[#ebdcc8]/70 bg-[#faf7f2] p-3">
               <span className="block text-[10px] uppercase tracking-wider text-[#7c6d62]">Date et heure</span>
               <strong className="mt-0.5 block font-semibold text-[#2d241e]">{WEDDING_CONFIG.dateString}</strong>
-              <span className="text-[11px] text-[#7c6d62]">À partir de 13 h 00</span>
+              <span className="text-[11px] text-[#7c6d62]">À partir de {scheduleTimes?.civil ?? "13 h 00"}</span>
             </div>
             <div className="ticket-content-block rounded-xl border border-[#ebdcc8]/70 bg-[#faf7f2] p-3">
               <span className="block text-[10px] uppercase tracking-wider text-[#7c6d62]">Lieux du mariage</span>
@@ -189,6 +195,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
               {selectedEventKeys.length ? (
                 selectedEventKeys.map(key => {
                   const event = EVENT_LABELS[key] || { label: key, time: "" };
+                  const eventTime = scheduleTimes?.[key as "civil" | "church" | "party"] ?? event.time;
                   return (
                     <span
                       key={key}
@@ -196,7 +203,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
                     >
                       <CheckCircle2 className="h-3 w-3 text-[#c69a58]" aria-hidden="true" />
                       <span>{event.label}</span>
-                      {event.time && <span className="text-[10px] text-[#9d7537]">· {event.time}</span>}
+                      {eventTime && <span className="text-[10px] text-[#9d7537]">· {eventTime}</span>}
                     </span>
                   );
                 })
@@ -214,6 +221,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
             <div className="space-y-1.5">
               {WEDDING_CONFIG.schedule.map(item => {
                 const label = EVENT_LABELS[item.id]?.label ?? item.title;
+                const time = scheduleTimes?.[item.id as "civil" | "church" | "party"] ?? item.start;
                 const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.mapQuery ?? item.location)}`;
                 return (
                   <a
@@ -225,7 +233,7 @@ export function DigitalTicket({ ticket }: { ticket: TicketData }) {
                     className="grid grid-cols-[92px_1fr] gap-2 border-t border-[#e1cfb5]/70 pt-1.5 text-inherit no-underline first:border-t-0 first:pt-0 hover:text-[#855f24] focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c69a58]"
                   >
                     <span className="text-[10px] font-semibold text-[#855f24]">
-                      {label} · {item.start}
+                      {label} · {time}
                     </span>
                     <span className="text-[10px] leading-relaxed text-[#5a4632] underline decoration-[#c69a58]/50 underline-offset-2">
                       {item.location}

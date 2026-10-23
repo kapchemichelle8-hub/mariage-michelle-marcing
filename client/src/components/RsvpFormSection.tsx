@@ -38,6 +38,10 @@ const EVENT_OPTIONS: {
 
 export function RsvpFormSection() {
   const [, setLocation] = useLocation();
+  const scheduleQuery = trpc.wedding.getSchedule.useQuery(undefined, {
+    staleTime: 30_000,
+    retry: false,
+  });
   const [code, setCode] = useState("");
   const [verifiedInvite, setVerifiedInvite] = useState<VerifiedInvite | null>(null);
   const [name, setName] = useState("");
@@ -45,6 +49,10 @@ export function RsvpFormSection() {
   const [selectedEvents, setSelectedEvents] = useState<EventChoice[]>([]);
   const [guestsCount, setGuestsCount] = useState<1 | 2>(1);
   const [message, setMessage] = useState("");
+  const eventOptions = EVENT_OPTIONS.map(option => ({
+    ...option,
+    time: scheduleQuery.data?.[option.id] ?? option.time,
+  }));
 
   const lookupMutation = trpc.wedding.lookupInvitationCode.useMutation({
     onSuccess: data => {
@@ -263,7 +271,7 @@ export function RsvpFormSection() {
                       Sélectionnez le mariage civil, la bénédiction nuptiale, la soirée, ou plusieurs moments.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {EVENT_OPTIONS.map(eventOption => {
+                      {eventOptions.map(eventOption => {
                         const isChecked = selectedEvents.includes(eventOption.id);
                         return (
                           <button

@@ -1,6 +1,7 @@
 import { Church, Heart, MapPin, Music, Play, Scale } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import { useReveal } from "@/hooks/useReveal";
+import { trpc } from "@/lib/trpc";
 import { WEDDING_CONFIG } from "../weddingConfig";
 import { HandUnderline, Reveal, SectionTitle } from "./Ornaments";
 
@@ -63,6 +64,14 @@ function ScheduleStep({ item, index }: { item: Step; index: number }) {
 
 export function ScheduleAndDetailsSection() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const scheduleQuery = trpc.wedding.getSchedule.useQuery(undefined, {
+    staleTime: 30_000,
+    retry: false,
+  });
+  const schedule = WEDDING_CONFIG.schedule.map(item => ({
+    ...item,
+    start: scheduleQuery.data?.[item.id as "civil" | "church" | "party"] ?? item.start,
+  }));
 
   return (
     <div className="space-y-20 py-14 md:py-16">
@@ -142,7 +151,7 @@ export function ScheduleAndDetailsSection() {
             className="absolute left-6 md:left-8 top-8 bottom-8 w-px bg-gradient-to-b from-[#c69a58]/10 via-[#c69a58] to-[#c69a58]/10"
             aria-hidden="true"
           />
-          {WEDDING_CONFIG.schedule.map((item, idx) => (
+          {schedule.map((item, idx) => (
             <ScheduleStep key={item.start} item={item} index={idx} />
           ))}
         </ol>
