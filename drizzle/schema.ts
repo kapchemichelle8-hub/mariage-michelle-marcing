@@ -38,6 +38,10 @@ export const invitedGuests = mysqlTable(
     sourceSerial: int("sourceSerial").notNull(),
     tableNumber: varchar("tableNumber", { length: 12 }),
     tableVirtue: varchar("tableVirtue", { length: 160 }),
+    /** Private symmetric link to the other code of a validated couple. */
+    partnerInvitationId: int("partnerInvitationId"),
+    /** Set on both partner rows when one code confirms the couple together. */
+    coupleClaimedAt: timestamp("coupleClaimedAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => ({
@@ -51,6 +55,9 @@ export const invitedGuests = mysqlTable(
     ),
     sideIdx: index("invited_guests_side_idx").on(table.side),
     tableIdx: index("invited_guests_table_idx").on(table.tableNumber),
+    partnerInvitationUnique: uniqueIndex(
+      "invited_guests_partner_invitation_unique"
+    ).on(table.partnerInvitationId),
   })
 );
 

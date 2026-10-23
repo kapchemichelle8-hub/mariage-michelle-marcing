@@ -1,9 +1,8 @@
-import { asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   guestbookMessages,
   invitedGuests,
-  InsertRsvp,
   InsertUser,
   legacyGuestbookMessages,
   legacySeatPlan,
@@ -92,19 +91,6 @@ export async function getNextSequentialTicketCode() {
     candidate = String(next).padStart(3, "0");
   }
   return candidate;
-}
-
-/** Retained for the historical RSVP path; the public form no longer calls it. */
-export async function createRsvp(data: InsertRsvp) {
-  const db = await getDb();
-  if (!db) throw new Error("Base de données indisponible");
-  await db.insert(rsvps).values(data);
-  const rows = await db
-    .select()
-    .from(rsvps)
-    .where(eq(rsvps.ticketCode, data.ticketCode))
-    .limit(1);
-  return rows[0];
 }
 
 export async function getRsvpByTicketCode(ticketCode: string) {
@@ -208,8 +194,28 @@ export async function getLegacySeatAssignmentByName(name: string) {
   return findSeatAssignment(name, assignments);
 }
 
-export async function insertInvitationRsvp(data: {
+export class InvitationRsvpClaimError extends Error {
+  constructor(
+    public readonly reason:
+      | "invitation-already-used"
+      | "partner-already-used"
+      | "couple-not-allowed"
+      | "couple-already-consumed"
+      | "invalid-couple-link"
+      | "invalid-guests-count"
+  ) {
+    super(reason);
+    this.name = "InvitationRsvpClaimError";
+  }
+}
+
+/**
+ * Claims one invitation code. When two places are selected, both validated
+ * couple codes are locked in a single transaction before the RSVP is inserted.
+ */
+export async function claimInvitationRsvp(data: {
   invitationId: number;
+  partnerInvitationId: number | null;
   name: string;
   side: "bride" | "groom";
   attendance: "yes" | "no";
@@ -220,14 +226,116 @@ export async function insertInvitationRsvp(data: {
   const db = await getDb();
   if (!db) throw new Error("Base de données indisponible");
 
-  await db.insert(rsvps).values({ ...data, message: null });
+  const isGuestsCountValid =
+    (data.attendance === "yes" && (data.guestsCount === 1 || data.guestsCount === 2)) ||
+    (data.attendance === "no" && data.guestsCount === 0);
+  if (!isGuestsCountValid) {
+    throw new InvitationRsvpClaimError("invalid-guests-count");
+  }
+  if (data.guestsCount === 2 && data.partnerInvitationId === null) {
+    throw new InvitationRsvpClaimError("couple-not-allowed");
+  }
+  if (data.partnerInvitationId === data.invitationId) {
+    throw new InvitationRsvpClaimError("invalid-couple-link");
+  }
 
-  const rows = await db
-    .select()
-    .from(rsvps)
-    .where(eq(rsvps.ticketCode, data.ticketCode))
-    .limit(1);
-  return rows[0];
+  const invitationIds = [data.invitationId, data.partnerInvitationId]
+    .filter((id): id is number => typeof id === "number")
+    .sort((left, right) => left - right);
+
+  return db.transaction(async tx => {
+    // The identical order prevents two simultaneous partner submissions from
+    // taking locks in opposite directions.
+    await tx.execute(sql`SELECT id FROM invited_guests WHERE id IN (${sql.join(
+      invitationIds.map(id => sql`${id}`),
+      sql`, `
+    )}) ORDER BY id FOR UPDATE`);
+
+    const lockedInvitations = await tx
+      .select({
+        id: invitedGuests.id,
+        partnerInvitationId: invitedGuests.partnerInvitationId,
+        coupleClaimedAt: invitedGuests.coupleClaimedAt,
+      })
+      .from(invitedGuests)
+      .where(inArray(invitedGuests.id, invitationIds));
+    const currentInvitation = lockedInvitations.find(
+      row => row.id === data.invitationId
+    );
+    const partnerInvitation = lockedInvitations.find(
+      row => row.id === data.partnerInvitationId
+    );
+    if (!currentInvitation) {
+      throw new InvitationRsvpClaimError("invalid-couple-link");
+    }
+    if (data.partnerInvitationId === null) {
+      if (currentInvitation.partnerInvitationId !== null) {
+        throw new InvitationRsvpClaimError("invalid-couple-link");
+      }
+    } else if (
+      !partnerInvitation ||
+      currentInvitation.partnerInvitationId !== partnerInvitation.id ||
+      partnerInvitation.partnerInvitationId !== currentInvitation.id
+    ) {
+      throw new InvitationRsvpClaimError("invalid-couple-link");
+    }
+    if (
+      currentInvitation.coupleClaimedAt !== null ||
+      partnerInvitation?.coupleClaimedAt !== null
+    ) {
+      throw new InvitationRsvpClaimError("couple-already-consumed");
+    }
+
+    const existing = await tx
+      .select({
+        invitationId: rsvps.invitationId,
+        guestsCount: rsvps.guestsCount,
+      })
+      .from(rsvps)
+      .where(inArray(rsvps.invitationId, invitationIds));
+
+    if (existing.some(row => row.invitationId === data.invitationId)) {
+      throw new InvitationRsvpClaimError("invitation-already-used");
+    }
+    const partnerResponse = existing.find(
+      row => row.invitationId === data.partnerInvitationId
+    );
+    if (partnerResponse?.guestsCount === 2) {
+      throw new InvitationRsvpClaimError("partner-already-used");
+    }
+    if (
+      data.guestsCount === 2 &&
+      data.partnerInvitationId !== null &&
+      partnerResponse
+    ) {
+      throw new InvitationRsvpClaimError("partner-already-used");
+    }
+
+    if (data.guestsCount === 2) {
+      await tx
+        .update(invitedGuests)
+        .set({ coupleClaimedAt: new Date() })
+        .where(inArray(invitedGuests.id, invitationIds));
+    }
+
+    await tx.insert(rsvps).values({
+      invitationId: data.invitationId,
+      name: data.name,
+      side: data.side,
+      attendance: data.attendance,
+      events: data.events,
+      guestsCount: data.guestsCount,
+      ticketCode: data.ticketCode,
+      message: null,
+    });
+
+    const rows = await tx
+      .select()
+      .from(rsvps)
+      .where(eq(rsvps.ticketCode, data.ticketCode))
+      .limit(1);
+    return rows[0];
+  });
 }
 
 export async function addGuestbookMessage(data: {

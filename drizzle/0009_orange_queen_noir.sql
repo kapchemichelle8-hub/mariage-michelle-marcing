@@ -1,0 +1,1 @@
+ALTER TABLE `invited_guests` ADD `coupleClaimedAt` timestamp;

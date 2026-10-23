@@ -57,6 +57,20 @@
       "when": 1792678692545,
       "tag": "0007_sour_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1792751824605,
+      "tag": "0008_polite_vampiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1792752146468,
+      "tag": "0009_orange_queen_noir",
+      "breakpoints": true
     }
   ]
 }

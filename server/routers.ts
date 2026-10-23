@@ -201,6 +201,13 @@ export const appRouter = router({
             message: "Ce code invité a déjà été utilisé. Il ne peut plus servir à une autre inscription.",
           });
         }
+        if (invite.coupleClaimedAt !== null) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "Ce code fait partie d’une invitation de couple déjà confirmée. Il ne peut plus être utilisé.",
+          });
+        }
         // Ne pas renvoyer le nom ni une liste de personnes à l’appelant public.
         return {
           recognized: true as const,
@@ -208,6 +215,7 @@ export const appRouter = router({
           side: invite.side,
           tableNumber: invite.tableNumber,
           tableVirtue: invite.tableVirtue,
+          isCoupleInvitation: invite.partnerInvitationId !== null,
         };
       }),
 
@@ -264,6 +272,21 @@ export const appRouter = router({
         });
       }
 
+      const confirmedGuests = input.attendance === "yes" ? input.guestsCount : 0;
+      if (confirmedGuests === 2 && invite.partnerInvitationId === null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cette invitation est valable pour une personne uniquement.",
+        });
+      }
+      if (invite.coupleClaimedAt !== null) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            "Ce code fait partie d’une invitation de couple déjà confirmée. Il ne peut plus être utilisé.",
+        });
+      }
+
       const eventsString =
         input.attendance === "yes" && input.events
           ? input.events
@@ -273,16 +296,30 @@ export const appRouter = router({
       const displayName = input.name.trim();
       let savedRsvp;
       try {
-        savedRsvp = await db.insertInvitationRsvp({
+        savedRsvp = await db.claimInvitationRsvp({
           invitationId: invite.id,
+          partnerInvitationId: invite.partnerInvitationId,
           name: displayName,
           side: invite.side,
           attendance: input.attendance,
           events: eventsString,
-          guestsCount: input.attendance === "yes" ? input.guestsCount : 0,
+          guestsCount: confirmedGuests,
           ticketCode: randomBytes(24).toString("base64url"),
         });
       } catch (error) {
+        if (error instanceof db.InvitationRsvpClaimError) {
+          const message =
+            error.reason === "couple-not-allowed" ||
+            error.reason === "invalid-guests-count"
+              ? "Cette invitation est valable pour une personne uniquement."
+              : error.reason === "partner-already-used" ||
+                  error.reason === "couple-already-consumed"
+                ? "Ce code fait partie d’une invitation de couple déjà confirmée. Il ne peut plus être utilisé."
+                : error.reason === "invalid-couple-link"
+                  ? "Cette invitation de couple ne peut pas être confirmée pour le moment."
+                : "Ce code invité a déjà été utilisé. Il ne peut plus servir à une autre inscription.";
+          throw new TRPCError({ code: "CONFLICT", message, cause: error });
+        }
         if (error instanceof Error && /duplicate|unique/i.test(error.message)) {
           throw new TRPCError({
             code: "CONFLICT",

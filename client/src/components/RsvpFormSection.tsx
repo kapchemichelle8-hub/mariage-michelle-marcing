@@ -22,6 +22,7 @@ type VerifiedInvite = {
   side: "bride" | "groom";
   tableNumber: string | null;
   tableVirtue: string | null;
+  isCoupleInvitation: boolean;
 };
 
 const EVENT_OPTIONS: {
@@ -47,7 +48,8 @@ export function RsvpFormSection() {
 
   const lookupMutation = trpc.wedding.lookupInvitationCode.useMutation({
     onSuccess: data => {
-      setVerifiedInvite(data);
+    setVerifiedInvite(data);
+      setGuestsCount(1);
       toast.success("Code reconnu. Vous pouvez compléter votre réponse.");
     },
     onError: error => {
@@ -286,24 +288,35 @@ export function RsvpFormSection() {
                   </div>
 
                   <div className="pt-3 border-t border-[#ebdcc8]/70">
-                    <label className="block text-sm font-semibold text-[#2d241e] mb-2">Vous viendrez… *</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { value: 1 as const, label: "Seul(e)", sub: "Une place" },
-                        { value: 2 as const, label: "En couple", sub: "Deux places" },
-                      ].map(option => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setGuestsCount(option.value)}
-                          aria-pressed={guestsCount === option.value}
-                          className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${guestsCount === option.value ? "gold-gradient text-white border-transparent shadow-sm" : "border-[#ebdcc8] bg-white text-[#5a4632] hover:border-[#c69a58]"}`}
-                        >
-                          <span className="flex items-center gap-2 font-semibold"><Users className="w-4 h-4" /> {option.label}</span>
-                          <span className={`block text-[11px] mt-1 ${guestsCount === option.value ? "text-white/80" : "text-muted-foreground"}`}>{option.sub}</span>
-                        </button>
-                      ))}
-                    </div>
+                    <label className="block text-sm font-semibold text-[#2d241e] mb-2">Nombre de personnes confirmées *</label>
+                    {verifiedInvite.isCoupleInvitation ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { value: 1 as const, label: "1 personne", sub: "Une seule place" },
+                            { value: 2 as const, label: "2 personnes", sub: "Les deux places du couple" },
+                          ].map(option => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setGuestsCount(option.value)}
+                              aria-pressed={guestsCount === option.value}
+                              className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${guestsCount === option.value ? "gold-gradient text-white border-transparent shadow-sm" : "border-[#ebdcc8] bg-white text-[#5a4632] hover:border-[#c69a58]"}`}
+                            >
+                              <span className="flex items-center gap-2 font-semibold"><Users className="w-4 h-4" /> {option.label}</span>
+                              <span className={`block text-[11px] mt-1 ${guestsCount === option.value ? "text-white/80" : "text-muted-foreground"}`}>{option.sub}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <p className="mt-2 text-[11px] text-[#7c6d62]">
+                          Si vous confirmez 2 personnes, le second code du couple sera automatiquement bloqué.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="rounded-xl border border-[#ebdcc8] bg-white px-4 py-3 text-sm text-[#5a4632]">
+                        Cette invitation est valable pour <strong>1 personne</strong>.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

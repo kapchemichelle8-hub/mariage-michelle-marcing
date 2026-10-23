@@ -4,6 +4,14 @@ import * as db from "./db";
 import type { TrpcContext } from "./_core/context";
 import { resetInvitationAttemptLimitsForTests } from "./invitationCodes";
 
+type Invitation = NonNullable<
+  Awaited<ReturnType<typeof db.getInvitationByCode>>
+>;
+type Ticket = NonNullable<Awaited<ReturnType<typeof db.getRsvpByTicketCode>>>;
+type SavedRsvp = NonNullable<
+  Awaited<ReturnType<typeof db.claimInvitationRsvp>>
+>;
+
 vi.mock("./db", async importOriginal => {
   const actual = await importOriginal<typeof import("./db")>();
   return {
@@ -12,7 +20,7 @@ vi.mock("./db", async importOriginal => {
     getInvitationById: vi.fn(),
     getRsvpByInvitationId: vi.fn(),
     getRsvpByTicketCode: vi.fn(),
-    insertInvitationRsvp: vi.fn(),
+    claimInvitationRsvp: vi.fn(),
     addGuestbookMessage: vi.fn(),
   };
 });
@@ -27,13 +35,15 @@ const invitation = {
   sourceSerial: 1,
   tableNumber: "4",
   tableVirtue: "Sagesse",
+  partnerInvitationId: null,
+  coupleClaimedAt: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
-} as Awaited<ReturnType<typeof db.getInvitationByCode>>;
+} as Invitation;
 
 const publicTicketToken = "AbCdEf0123456789_-".padEnd(32, "Z");
 const savedRsvp = {
   ticketCode: publicTicketToken,
-} as Awaited<ReturnType<typeof db.insertInvitationRsvp>>;
+} as SavedRsvp;
 const ticketRow = {
   id: 19,
   name: "Nom à afficher",
@@ -47,7 +57,7 @@ const ticketRow = {
   invitationId: 7,
   createdAt: new Date("2026-10-22T00:00:00.000Z"),
   updatedAt: new Date("2026-10-22T00:00:00.000Z"),
-} as Awaited<ReturnType<typeof db.getRsvpByTicketCode>>;
+} as Ticket;
 
 function createMockContext(): TrpcContext {
   return {
@@ -69,7 +79,7 @@ describe("wedding invitation code flow", () => {
     vi.mocked(db.getInvitationById).mockResolvedValue(invitation);
     vi.mocked(db.getRsvpByTicketCode).mockResolvedValue(ticketRow);
     vi.mocked(db.getRsvpByInvitationId).mockResolvedValue(undefined);
-    vi.mocked(db.insertInvitationRsvp).mockResolvedValue(savedRsvp);
+    vi.mocked(db.claimInvitationRsvp).mockResolvedValue(savedRsvp);
     vi.mocked(db.addGuestbookMessage).mockResolvedValue(undefined);
   });
 
@@ -87,6 +97,7 @@ describe("wedding invitation code flow", () => {
       side: "bride",
       tableNumber: "4",
       tableVirtue: "Sagesse",
+      isCoupleInvitation: false,
     });
     expect("name" in result).toBe(false);
     expect(db.getInvitationByCode).toHaveBeenCalledWith("MM001");
@@ -107,9 +118,10 @@ describe("wedding invitation code flow", () => {
     expect(result.attendance).toBe("yes");
     expect(result.ticketCode).toBe(publicTicketToken);
     expect(result.ticketCode).not.toBe("MM001");
-    expect(db.insertInvitationRsvp).toHaveBeenCalledWith(
+    expect(db.claimInvitationRsvp).toHaveBeenCalledWith(
       expect.objectContaining({
         invitationId: 7,
+        partnerInvitationId: null,
         ticketCode: expect.stringMatching(/^[A-Za-z0-9_-]{32}$/),
         name: "Surnom de test",
         side: "bride",
@@ -139,7 +151,79 @@ describe("wedding invitation code flow", () => {
         attendance: "no",
       })
     ).rejects.toMatchObject({ code: "CONFLICT" });
-    expect(db.insertInvitationRsvp).not.toHaveBeenCalled();
+    expect(db.claimInvitationRsvp).not.toHaveBeenCalled();
+  });
+
+  it("autorise deux personnes seulement pour un code relié à un partenaire", async () => {
+    const coupleInvitation = { ...invitation, partnerInvitationId: 8 };
+    vi.mocked(db.getInvitationByCode).mockResolvedValue(coupleInvitation);
+    const caller = appRouter.createCaller(createMockContext());
+
+    await expect(
+      caller.wedding.submitRsvp({
+        code: "MM001",
+        name: "Premier partenaire",
+        attendance: "yes",
+        events: ["party"],
+        guestsCount: 2,
+      })
+    ).resolves.toMatchObject({ success: true });
+
+    expect(db.claimInvitationRsvp).toHaveBeenCalledWith(
+      expect.objectContaining({ invitationId: 7, partnerInvitationId: 8, guestsCount: 2 })
+    );
+  });
+
+  it("refuse deux personnes pour une invitation individuelle, même si le navigateur force la valeur", async () => {
+    const caller = appRouter.createCaller(createMockContext());
+
+    await expect(
+      caller.wedding.submitRsvp({
+        code: "MM001",
+        name: "Invité individuel",
+        attendance: "yes",
+        events: ["party"],
+        guestsCount: 2,
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(db.claimInvitationRsvp).not.toHaveBeenCalled();
+  });
+
+  it("garde le code partenaire bloqué même après une suppression administrative du RSVP", async () => {
+    const coupleInvitation = {
+      ...invitation,
+      partnerInvitationId: 8,
+      coupleClaimedAt: new Date("2026-10-23T10:00:00.000Z"),
+    };
+    vi.mocked(db.getInvitationByCode).mockResolvedValue(coupleInvitation);
+    const caller = appRouter.createCaller(createMockContext());
+
+    await expect(caller.wedding.lookupInvitationCode({ code: "MM001" })).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: expect.stringContaining("invitation de couple déjà confirmée"),
+    });
+  });
+
+  it("renvoie le conflit atomique si le partenaire vient d’être confirmé à deux", async () => {
+    const coupleInvitation = { ...invitation, partnerInvitationId: 8 };
+    vi.mocked(db.getInvitationByCode).mockResolvedValue(coupleInvitation);
+    vi.mocked(db.claimInvitationRsvp).mockRejectedValue(
+      new db.InvitationRsvpClaimError("partner-already-used")
+    );
+    const caller = appRouter.createCaller(createMockContext());
+
+    await expect(
+      caller.wedding.submitRsvp({
+        code: "MM001",
+        name: "Second partenaire",
+        attendance: "yes",
+        events: ["party"],
+        guestsCount: 1,
+      })
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: expect.stringContaining("invitation de couple déjà confirmée"),
+    });
   });
 
   it("returns an allow-listed ticket payload without email, message, IDs or timestamps", async () => {
