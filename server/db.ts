@@ -342,8 +342,9 @@ export async function claimInvitationRsvp(data: {
       throw new InvitationRsvpClaimError("invalid-couple-link");
     }
     if (
-      currentInvitation.coupleClaimedAt !== null ||
-      partnerInvitation?.coupleClaimedAt !== null
+      data.partnerInvitationId !== null &&
+      (currentInvitation.coupleClaimedAt !== null ||
+        partnerInvitation?.coupleClaimedAt !== null)
     ) {
       throw new InvitationRsvpClaimError("couple-already-consumed");
     }

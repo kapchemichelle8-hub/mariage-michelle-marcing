@@ -206,7 +206,7 @@ export const appRouter = router({
             message: "Ce code invité a déjà été utilisé. Il ne peut plus servir à une autre inscription.",
           });
         }
-        if (invite.coupleClaimedAt !== null) {
+        if (invite.partnerInvitationId !== null && invite.coupleClaimedAt !== null) {
           throw new TRPCError({
             code: "CONFLICT",
             message:
@@ -284,7 +284,7 @@ export const appRouter = router({
           message: "Cette invitation est valable pour une personne uniquement.",
         });
       }
-      if (invite.coupleClaimedAt !== null) {
+      if (invite.partnerInvitationId !== null && invite.coupleClaimedAt !== null) {
         throw new TRPCError({
           code: "CONFLICT",
           message:

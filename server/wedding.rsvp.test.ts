@@ -189,6 +189,29 @@ describe("wedding invitation code flow", () => {
     expect(db.claimInvitationRsvp).not.toHaveBeenCalled();
   });
 
+  it("n’emploie jamais le verrou couple pour une invitation individuelle", async () => {
+    vi.mocked(db.getInvitationByCode).mockResolvedValue({
+      ...invitation,
+      partnerInvitationId: null,
+      coupleClaimedAt: new Date("2026-10-23T10:00:00.000Z"),
+    });
+    const caller = appRouter.createCaller(createMockContext());
+
+    await expect(caller.wedding.lookupInvitationCode({ code: "MM001" })).resolves.toMatchObject({
+      recognized: true,
+      isCoupleInvitation: false,
+    });
+    await expect(
+      caller.wedding.submitRsvp({
+        code: "MM001",
+        name: "Invitation individuelle",
+        attendance: "yes",
+        events: ["civil"],
+        guestsCount: 1,
+      })
+    ).resolves.toMatchObject({ success: true });
+  });
+
   it("garde le code partenaire bloqué même après une suppression administrative du RSVP", async () => {
     const coupleInvitation = {
       ...invitation,
