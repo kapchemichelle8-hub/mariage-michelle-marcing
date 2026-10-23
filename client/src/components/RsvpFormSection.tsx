@@ -104,7 +104,7 @@ export function RsvpFormSection() {
   const handleLookup = () => {
     const normalizedCode = code.trim().toUpperCase();
     if (!/^MM\d{3}$/.test(normalizedCode)) {
-      toast.error("Saisissez le code de votre invitation, par exemple MM001.");
+      toast.error("Saisissez le code privé inscrit sur votre invitation.");
       return;
     }
     lookupMutation.mutate({ code: normalizedCode });
@@ -155,7 +155,7 @@ export function RsvpFormSection() {
               Code de votre invitation *
             </label>
             <p className="text-xs text-[#7c6d62] mb-3">
-              Entrez le code inscrit sur votre invitation, par exemple <strong>MM001</strong>.
+              Entrez le code privé inscrit sur votre invitation.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
@@ -173,7 +173,7 @@ export function RsvpFormSection() {
                     handleLookup();
                   }
                 }}
-                placeholder="MM001"
+                placeholder="Code privé"
                 className="w-full px-4 py-3 rounded-xl border border-[#ebdcc8] bg-white font-mono text-sm uppercase tracking-[0.14em] focus:outline-none focus:ring-2 focus:ring-[#c69a58]"
               />
               <button

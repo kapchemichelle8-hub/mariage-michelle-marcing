@@ -317,6 +317,8 @@ export const appRouter = router({
             error.reason === "couple-not-allowed" ||
             error.reason === "invalid-guests-count"
               ? "Cette invitation est valable pour une personne uniquement."
+              : error.reason === "name-already-used"
+                ? "Ce nom est déjà utilisé par une autre invitation. Saisissez le nom de la personne concernée."
               : error.reason === "partner-already-used" ||
                   error.reason === "couple-already-consumed"
                 ? "Ce code fait partie d’une invitation de couple déjà confirmée. Il ne peut plus être utilisé."
@@ -324,6 +326,14 @@ export const appRouter = router({
                   ? "Cette invitation de couple ne peut pas être confirmée pour le moment."
                 : "Ce code invité a déjà été utilisé. Il ne peut plus servir à une autre inscription.";
           throw new TRPCError({ code: "CONFLICT", message, cause: error });
+        }
+        if (error instanceof Error && /rsvps_name_key_unique/i.test(error.message)) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "Ce nom est déjà utilisé par une autre invitation. Saisissez le nom de la personne concernée.",
+            cause: error,
+          });
         }
         if (error instanceof Error && /duplicate|unique/i.test(error.message)) {
           throw new TRPCError({

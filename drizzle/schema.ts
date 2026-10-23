@@ -107,6 +107,8 @@ export const rsvps = mysqlTable(
     /** The old message column stays intact for every historical RSVP. */
     message: text("message"),
     ticketCode: varchar("ticketCode", { length: 32 }).notNull().unique(),
+    /** Used only by new code-based RSVPs to prevent duplicate displayed names. */
+    nameKey: varchar("nameKey", { length: 180 }),
     invitationId: int("invitationId").references(() => invitedGuests.id, {
       onDelete: "set null",
     }),
@@ -117,6 +119,7 @@ export const rsvps = mysqlTable(
     invitationUnique: uniqueIndex("rsvps_invitation_id_unique").on(
       table.invitationId
     ),
+    nameKeyUnique: uniqueIndex("rsvps_name_key_unique").on(table.nameKey),
   })
 );
 

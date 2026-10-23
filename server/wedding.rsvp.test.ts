@@ -249,6 +249,27 @@ describe("wedding invitation code flow", () => {
     });
   });
 
+  it("explique qu’un nom d’affichage déjà utilisé doit être corrigé", async () => {
+    vi.mocked(db.getInvitationByCode).mockResolvedValue(invitation);
+    vi.mocked(db.claimInvitationRsvp).mockRejectedValue(
+      new db.InvitationRsvpClaimError("name-already-used")
+    );
+    const caller = appRouter.createCaller(createMockContext());
+
+    await expect(
+      caller.wedding.submitRsvp({
+        code: "MM001",
+        name: "Tsomeguem Francine",
+        attendance: "yes",
+        events: ["civil"],
+        guestsCount: 1,
+      })
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: expect.stringContaining("nom est déjà utilisé"),
+    });
+  });
+
   it("returns an allow-listed ticket payload without email, message, IDs or timestamps", async () => {
     const caller = appRouter.createCaller(createMockContext());
     const result = await caller.wedding.getTicket({ code: publicTicketToken });

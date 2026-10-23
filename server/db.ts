@@ -265,6 +265,7 @@ export class InvitationRsvpClaimError extends Error {
       | "couple-already-consumed"
       | "invalid-couple-link"
       | "invalid-guests-count"
+      | "name-already-used"
   ) {
     super(reason);
     this.name = "InvitationRsvpClaimError";
@@ -300,6 +301,7 @@ export async function claimInvitationRsvp(data: {
   if (data.partnerInvitationId === data.invitationId) {
     throw new InvitationRsvpClaimError("invalid-couple-link");
   }
+  const nameKey = normalizeGuestName(data.name) || data.name.trim().toLowerCase();
 
   const invitationIds = [data.invitationId, data.partnerInvitationId]
     .filter((id): id is number => typeof id === "number")
@@ -349,6 +351,25 @@ export async function claimInvitationRsvp(data: {
       throw new InvitationRsvpClaimError("couple-already-consumed");
     }
 
+    const currentRsvps = await tx
+      .select({
+        id: rsvps.id,
+        invitationId: rsvps.invitationId,
+        name: rsvps.name,
+        nameKey: rsvps.nameKey,
+      })
+      .from(rsvps)
+      .where(isNotNull(rsvps.invitationId));
+    if (
+      currentRsvps.some(
+        row =>
+          row.invitationId !== data.invitationId &&
+          (row.nameKey ?? normalizeGuestName(row.name)) === nameKey
+      )
+    ) {
+      throw new InvitationRsvpClaimError("name-already-used");
+    }
+
     const existing = await tx
       .select({
         invitationId: rsvps.invitationId,
@@ -388,6 +409,7 @@ export async function claimInvitationRsvp(data: {
       attendance: data.attendance,
       events: data.events,
       guestsCount: data.guestsCount,
+      nameKey,
       ticketCode: data.ticketCode,
       message: null,
     });

@@ -185,11 +185,23 @@ export default function ReceptionPage() {
   const startScan = async () => {
     if (!videoRef.current) return;
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("camera-unavailable");
+      }
+      const permissionStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: "environment" } },
+      });
+      permissionStream.getTracks().forEach(track => track.stop());
       const { BrowserQRCodeReader } = await import("@zxing/browser");
+      const devices = await BrowserQRCodeReader.listVideoInputDevices();
+      const backCamera = devices.find(device =>
+        /back|rear|environment|arrière/i.test(device.label)
+      );
       const reader = new BrowserQRCodeReader();
       setIsScanning(true);
       scanControlsRef.current = await reader.decodeFromVideoDevice(
-        undefined,
+        backCamera?.deviceId ?? devices[0]?.deviceId,
         videoRef.current,
         result => {
           if (result) {
@@ -200,11 +212,15 @@ export default function ReceptionPage() {
           }
         }
       );
-    } catch {
+    } catch (error) {
       setIsScanning(false);
-      toast.error(
-        "La caméra n’a pas pu démarrer. Utilisez la saisie manuelle."
-      );
+      const message =
+        error instanceof DOMException && error.name === "NotAllowedError"
+          ? "Autorisez l’accès à la caméra dans le navigateur, puis réessayez."
+          : error instanceof DOMException && error.name === "NotFoundError"
+            ? "Aucune caméra n’a été trouvée sur ce téléphone."
+            : "La caméra n’a pas pu démarrer. Utilisez la saisie manuelle.";
+      toast.error(message);
     }
   };
   const stopScan = () => {
